@@ -13,5 +13,7 @@ Note that when type username and password here comes the following error that re
 remote: Please see https://docs.github.com/en/get-started/getting-started-with-git/about-remote-repositories#cloning-with-https-urls for information on currently recommended modes of authentication.
 fatal: Authentication failed for 'https://github.com/UCBoulder/GEMX.git/' 
 
-Here are the steps to set up personal access token in github:
+*Note that password should be the personal access token
+
+Here are the steps to set up the personal access token in github:
 In the upper-right corner of any page, click your profile photo, then click Settings. In the left sidebar, click Developer settings. In the left sidebar, under Personal access tokens, click Tokens (classic). Select Generate new token, then click Generate new token (classic).

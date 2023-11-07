@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH -A mp118
+#SBATCH -C cpu
+#SBATCH --qos=debug
+#SBATCH --time=30
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=32
+#SBATCH -J na
+
+srun -n 32 --cpu-bind=cores -c 8 ./gem >& run.out
+

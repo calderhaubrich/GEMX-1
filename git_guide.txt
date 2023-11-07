@@ -1,0 +1,17 @@
+Details could be found in the link: https://www.atlassian.com/git/tutorials/setting-up-a-repository
+
+
+Step 1: Executing "git init" creates a .git subdirectory in the current working directory
+
+Step 2: Add modified files to the staging area:(e.g, if gem.F90 is modified ingemx_scott_1018), the following command could be used (under the GEMX directory): "git add gemx_scott_1018"
+
+Step 3: Commit the staged files: Once the files are staged, you can commit them to your repository with: git commit -m "modification info"
+
+Step 4: Push the commit to a remote repository: git push origin branch-name
+
+Note that when type username and password here comes the following error that remote: Support for password authentication was removed on August 13, 2021.
+remote: Please see https://docs.github.com/en/get-started/getting-started-with-git/about-remote-repositories#cloning-with-https-urls for information on currently recommended modes of authentication.
+fatal: Authentication failed for 'https://github.com/UCBoulder/GEMX.git/' 
+
+Here are the steps to set up personal access token in github:
+In the upper-right corner of any page, click your profile photo, then click Settings. In the left sidebar, click Developer settings. In the left sidebar, under Personal access tokens, click Tokens (classic). Select Generate new token, then click Generate new token (classic).

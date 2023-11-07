@@ -335,8 +335,8 @@ do k=0,1!kmx
       
       call new_gem_com()
       ns = 1
-      tmm(ns)=ntracer                               
-      mm(ns)=int(ntracer/numprocs)                   
+      tmm(ns)=mmx                               
+      mm(ns)=int(mmx/numprocs)                   
 
 !     write(*,*)'in init  ',Myid,mm(ns)
       mims(ns)=1.0

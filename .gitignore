@@ -1,6 +1,7 @@
 **/*.mod
 **/*.o
 **/gemx
-src/out
-src/dump
-src/matrix
+**/out
+**/dump
+**/matrix
+**/gemx_timing.txt

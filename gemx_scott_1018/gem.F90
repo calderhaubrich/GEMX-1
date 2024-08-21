@@ -12,92 +12,233 @@
 !      use equil
       implicit none
 
-       integer :: status
-       integer :: n,i,j,k,ip,m,idx
+       integer :: status,mid_i,mid_j
+       integer :: n,i,j,k,ip,m,outk,ix=135,jx=68
        real::random
-       PetscInt is,js,iw,jw
-       PetscInt one,three
+       real :: tmp
+       PetscInt is,js,iw,jw,idx,n_in_porcs
+       PetscInt one,three,vec_start,vec_end
        PetscErrorCode petsc_ierr
        PetscScalar, POINTER ::phi_array(:)
        KSP ksp
        DM dm
-       Vec petsc_phi
        PetscObject  vec
+       Vec petsc_phi,mpi_phi
        PetscViewer viewer
+       VecScatter   ctx
        external ComputeRHS,ComputeMatrix,ComputeInitialGuess
-call initialize
 
-       open(935, file='flag_debug',status='unknown',position='append')
-       write(935,*)'0001'
-       close(935)
 
-  
+
+!       call init
+       call initialize
+
+
+!      write(*,*) rand_table
+!       call weight
+
+!              open(unit=11, file = 'testxforw',status='unknown',action='write')
+!               do j=0,jmx
+                  
+!                 write(11,*) xforw(:,j)
+!                  enddo
+!                  close(11)
+!                                open(unit=11, file = 'testzforw',status='unknown',action='write')
+!               do j=0,jmx
+                  
+!                  write(11,*) zforw(:,j)
+!                  enddo
+!               close(11)   
+
+
+!                             open(unit=11, file = 'testxbackw',status='unknown',action='write')
+!               do j=0,jmx
+!                  
+!                  write(11,*) xbackw(:,j)
+!                  enddo
+!                  close(11)
+!                                open(unit=11, file = 'testzbackw',status='unknown',action='write')
+!               do j=0,jmx
+                  
+!                  write(11,*) zbackw(:,j)
+!                  enddo
+!                  close(11)
+
+
+
+!       call MPI_FINALIZE(ierr)
+       
+  outk=0!(kmx+1)/2
+   
        one = 1
        three = 3
 
+
+
+       PETSC_COMM_WORLD =  PETSC_COMM
+       
+
+!        write(*,*)"before petsc init"
+       
        PetscCallA(PetscInitialize(petsc_ierr))
-!         open(935, file='flag_debug',status='unknown',position='append')
-!  write(935,*)'0002'
-!  close(935)
        PetscCallA(KSPCreate(PETSC_COMM_WORLD,ksp,petsc_ierr))
-       PetscCallA(DMDACreate2D(PETSC_COMM_WORLD, DM_BOUNDARY_NONE,DM_BOUNDARY_NONE, DMDA_STENCIL_STAR,nx+1,nz+1,PETSC_DECIDE,PETSC_DECIDE,one,one, PETSC_NULL_INTEGER,PETSC_NULL_INTEGER, dm, petsc_ierr))
+       PetscCallA(DMDACreate2D(PETSC_COMM_WORLD, DM_BOUNDARY_NONE,DM_BOUNDARY_NONE, DMDA_STENCIL_STAR,imx+1,jmx+1,PETSC_DECIDE,PETSC_DECIDE,one,one, PETSC_NULL_INTEGER,PETSC_NULL_INTEGER, dm, petsc_ierr))
        PetscCallA(DMSetFromOptions(dm,petsc_ierr))
        PetscCallA(DMSetUp(dm,petsc_ierr))
        PetscCallA(KSPSetDM(ksp,dm,petsc_ierr))
- ! open(935, file='flag_debug',status='unknown',position='append')
- ! write(935,*)'0003'
- ! close(935)
        PetscCallA(KSPSetComputeInitialGuess(ksp,ComputeInitialGuess,0,petsc_ierr))
- !                        open(935, file='flag_debug',status='unknown',position='append')
- ! write(935,*)'0004'
- ! close(935)
-
-       PetscCallA(KSPSetComputeRHS(ksp,ComputeRHS,0,petsc_ierr))
-       PetscCallA(KSPSetComputeOperators(ksp,ComputeMatrix,0,petsc_ierr))
-!                           open(935, file='flag_debug',status='unknown',position='append')
- ! write(935,*)'0005'
- ! close(935)
-        	
+       PetscCallA(KSPSetComputeOperators(ksp,ComputeMatrix,0,petsc_ierr))      	
        PetscCallA(DMDAGetCorners(dm,is,js,PETSC_NULL_INTEGER,iw,jw,PETSC_NULL_INTEGER,petsc_ierr))
-!                           open(935, file='flag_debug',status='unknown',position='append')
-!  write(935,*)'0006'
-!  close(935)
        PetscCallA(KSPSetFromOptions(ksp,petsc_ierr))
-!                           open(935, file='flag_debug',status='unknown',position='append')
-!  write(935,*)'0007'
-!  close(935)
        PetscCallA(KSPSetUp(ksp,petsc_ierr))
-!                          open(935, file='flag_debug',status='unknown',position='append')
-!  write(935,*)'0008'
-!  close(935)
-
-       
+!       PetscCallA(VecGetOwnershipRange(petsc_phi,vec_start,vec_end,petsc_ierr))
 
 
+  
 
-         
+!        write(*,*)"after petsc  init"
+!  include "Initialize_petsc.h"
+     
 
-!      implicit none
+!        call initialize
 
 
-!	call particle loader and initialization
+
+
+
+       !	if(iget.eq.0)call loader_wrapper
+     !  if(iget.eq.0)call loadt
+
+
        if(iget.eq.0)call loadi
+       call integ(2)
 
+               if(myid==0)then
+                open(unit=11, file = 'testden',status='unknown',action='write')
+                do j=0,jmx                 
+                  write(11,*) den2d2(:,j)
+                enddo
+                  close(11)
+               end if
+               if(i3D==0)then
+                  do k=1,kmx
+                     xn0i=den2d2
+                  end do
+               end if
+               
        
         starttm=MPI_WTIME()
-
+!        upar(0,0,0)=exp(0.5)
+        upar=0
 
  !       call generate_LHS_gkps()
 
- ! open(935, file='flag_debug',status='unknown',position='append')
- ! write(935,*)'initialize OK'
- ! close(935)
+
+        mid_i=imx/2
+        mid_j=jmx/2
+        mid_i=257
+        mid_j=257
+
+        tor_n=1
+
+ !       write(*,*)"before init"
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!initialize perturbation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        do k=0,kmx
+              do i=0,imx
+                 do j=0,jmx
+!                    call random_number(random)
+!                    dene(i,j,k)=mask(i,j)*cos(2*pi*k/(kmx+1))*2*exp(-((i-mid_i)**2+(j-mid_j)**2)/(0.09*min(mid_i,mid_j))**2)
+
+
+
+
+                    !                    apar(i,j,k)=mask(i,j)*cos(tor_n*2*pi*k/(kmx+1))*2*exp(-((i-mid_i)**2+(j-mid_j)**2)/(0.09*min(mid_i,mid_j))**2)
+                    ! apar(i,j,k)=mask2(i,j)*2*exp(-((i-ix)**2+(j-jx)**2)/(0.04*257)**2)!*cos(tor_n*2*pi*k/(kmx+1))
+                    !                    apar(i,j,k)=mask2(i,j)*(exp(-(psi_p(i,j)-0.13)**2/0.01**2)-exp(-(psi_p(i,j)-0.16)**2/0.01**2))*cos(tor_n*2*pi*k/(kmx+1))
+                   ! if (i==mid_i .and. j==mid_j) then
+                   !    apar(i,j,k)=0
+                   ! else
+                      ! apar(i,j,k)=mask2(i,j)*(exp(-(psi_p(i,j)-0.1905)**2/0.01**2))*cos(tor_n*2*pi*k/(kmx+1))*(2*(j-mid_j)**2*dz**2/((j-mid_j)**2*dz**2+(i-mid_i)**2*dx**2)-1)!cos(2*pi*2*ATAN((j-mid_j)/(i-mid_i)))
+                   ! endif
+                    
+                    
+!                    apar(i,j,k)=mask(i,j)*(ran2(iseed)-0.5)
+!                    apar(i,j,k)=0
+                    apars(i,j,k)=0
+!                    apar(i,j,k)=0
+                     jpar(i,j,k)=0
+                     dene(i,j,k)=0!ran(-0.5)
+                     phi(i,j,k)=0!-j*0.01
+                     ez(i,j,k)=0!0.01/dz
+                 enddo
+              enddo
+           enddo
+           
+
+           call get_jpar(apar)
+           call get_ne(0)
+
+           if(i3d==0)then
+              apar=0
+              dene=0
+              call integ(2)
+           end if
+           
+
+           if (MyId==0) then
+
+           open(unit=11, file = 'testj0',status='unknown',action='write')
+               do j=0,jmx
+                  
+                  write(11,*) jpar(:,j,outk)
+                  enddo
+               close(11)
+
+               open(unit=11, file = 'testne0',status='unknown',action='write')
+               do j=0,jmx
+                  
+                  write(11,*) dene(:,j,outk)
+                  enddo
+               close(11)
+
+               open(unit=11, file = 'testapar0',status='unknown',action='write')
+               do j=0,jmx
+                  
+                  write(11,*) apar(:,j,outk)
+                  enddo
+               close(11)
+               
+               open(unit=11, file = 'testne0_zeta',status='unknown',action='write')
+                 do k=0,kmx
+                   write(11,*) dene(mid_i,mid_j,k)
+                 enddo
+               close(11)
+
+              open(unit=11, file = 'testjpar0_zeta',status='unknown',action='write')
+                 do k=0,kmx
+                   write(11,*) jpar(mid_i,mid_j,k)
+                 enddo
+               close(11)
+            end if
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!end of init perturbation!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!            
+
  if (ifield_solver .eq. 1) then         
-    ncurr = 1                      
-    nm = 1                 
+                 ncurr = 1                      
+!                 nm = 1                 
  end if
 
-        do  timestep=ncurr,nm
+!              write(*,*) 'after init'
+  start_total_tm = MPI_WTIME()
+  do  timestep=ncurr,nm
+     !       write(*,*) nm
+     do i=0,10006
+          if (ran2(iseed)-0.5>0) then
+             rand_table(i)=1
+          else
+             rand_table(i)=-1
+      end if
+          
+      end do
            tcurr = tcurr+dt
 
 !	   call accumulate(timestep-1,0)
@@ -106,181 +247,469 @@ call initialize
 !     call field(timestep-1,0)
 
 
+      if(ifield_solver .eq. 1 ) then
 
- !           open(935, file='flag_debug',status='unknown',position='append')
- ! write(935,*)'before solve RHS, time=', timestep
-           ! close(935)
-           if(ifield_solver .eq. 1) then
-           do k=0,1!kmx
+       phi=0.0
+       denes=dene
 
-
-              !              if(tcurr==1) then
-              do i=0,imx
-                 do j=0,jmx
-                    call random_number(random)
-                    dene(i,j,k)=mask(i,j)*2*(random-0.5)
-                 enddo
-              enddo
-              !              endif
-              
-              open(unit=11, file = './out/testne',status='unknown',action='write')
-              do j=0,jmx
-
-                 write(11,*) dene(:,j,k)
-                 enddo
-              close(11)
-              
-                    
-   PetscCallA(KSPSetComputeRHS(ksp,ComputeRHS,k,petsc_ierr))
-
-!              open(935, file='flag_debug',status='unknown',position='append')
-!  write(935,*)'before solve setup, time=', timestep
-!  close(935)
-!  PetscCallA(KSPSetUp(ksp,petsc_ierr))
-!              open(935, file='flag_debug',status='unknown',position='append')
-!  write(935,*)'before solve gk, time=', timestep
-!  close(935)
-               PetscCallA(KSPSolve(ksp,PETSC_NULL_VEC,PETSC_NULL_VEC,petsc_ierr))
-!                open(935, file='flag_debug',status='unknown',position='append')
-!  write(935,*)'before solve getsolution, time=', timestep
-!  close(935)
-               PetscCallA(KSPGetSolution(ksp,petsc_phi,petsc_ierr))
-!                open(935, file='flag_debug',status='unknown',position='append')
-!  write(935,*)'after getsolution, time=', timestep
-!  close(935)
-
-! if (k==0) then
-!     PetscCall(VecView(petsc_phi, PETSC_VIEWER_STDOUT_WORLD,ierr))
-!endif
-               PetscCall(VecGetArrayF90(petsc_phi, phi_array, petsc_ierr))
-
-!       do i=0,imx
-    !          do j=0,jmx
-               do idx=0,(imx+1)*(jmx+1)-1
-                  i=mod(idx,(imx+1))
-                  j=idx/(imx+1)
-                  phi(i,j,k)=phi_array(idx)!*mask(i,j)
-!         enddo
-             !      enddo
-               enddo
-   
-               if (k==1) then
-                  open(unit=11, file = './out/testphi',status='unknown',action='write')
-                  do j=0,jmx
-
-                     write(11,*) phi(:,j,k)
-                  enddo
-                  close(11)
-               endif       
 
        
-        enddo
+       if(i3D /= 0) then
+       do k=MyId*(kmx+1)/(numprocs),(MyId+1)*(kmx+1)/(numprocs)-1
+                 
+          !         write(*,*)'1k=',
+!          write(*,*) 'befire RHS'
+
+          PetscCallA(KSPSetComputeRHS(ksp,ComputeRHS,k,petsc_ierr))
+!          write(*,*) 'after RHS'
+
+         PetscCallA(KSPSolve(ksp,PETSC_NULL_VEC,PETSC_NULL_VEC,petsc_ierr))
+         PetscCallA(KSPGetSolution(ksp,petsc_phi,petsc_ierr))
+         PetscCall(VecGetArrayReadF90(petsc_phi, phi_array, petsc_ierr))
+         PetscCallA(VecGetOwnershipRange(petsc_phi,vec_start,vec_end,petsc_ierr))
+
+         
+         do idx=1, vec_end-vec_start
+            i=mod(idx-1,(iw))+is
+            j=(idx-1)/(iw)+js
+            phi(i,j,k)=phi_array(idx)!*mask(i,j)
+         enddo
+!        idx=1
+!        do 101, j=js,js+jw-1
+!          do  201,i=is,is+iw-1          
+!            i=mod(idx,(imx+1))
+!            j=(idx)/(imx+1)
+!            phi(i,j,k)=phi_array(idx)
+!            idx=idx+1
+!201       continue
+!101    continue
+          PetscCall(VecRestoreArrayReadF90(petsc_phi,phi_array,petsc_ierr))
+!         PetscCallA(VecRestoreArrayF90(petsc_phi, phi_array,petsc_ierr))
+         
+  !       PetscCallA(KSPDestroy(ksp,petsc_ierr))
+      enddo
+            
+      call  MPI_Allreduce(MPI_IN_PLACE, phi, (imx+1)*(jmx+1)*(kmx+1),MPI_Real8, MPI_SUM, MPI_COMM_WORLD,ierr)
+   else
+!      if(petsc_rank==0)then
+
+       k=0
+ !         write(*,*) 'befire RHS'
+
+         PetscCallA(KSPSetComputeRHS(ksp,ComputeRHS,k,petsc_ierr))
+ !         write(*,*) 'after RHS'
+         PetscCallA(KSPSolve(ksp,PETSC_NULL_VEC,PETSC_NULL_VEC,petsc_ierr))
+         PetscCallA(KSPGetSolution(ksp,petsc_phi,petsc_ierr))
+         PetscCallA(VecGetOwnershipRange(petsc_phi,vec_start,vec_end,petsc_ierr))
+
+
+!         PetsccallA(VecScatterCreateToAllF90(mpi_phi, petsc_phi))
+         !         if (timestep==1.and.k==0)then
+
+!             PetscCall(VecAssemblyBegin(petsc_phi,ierr))
+!             PetscCall(VecAssemblyEnd(petsc_phi,ierr))
+
+
+!         if (petsc_rank==0)then
+         PetscCall(VecGetArrayReadF90(petsc_phi, phi_array, petsc_ierr))
+         do idx=1, vec_end-vec_start
+            i=mod(idx-1,(iw))+is
+            j=(idx-1)/(iw)+js
+            phi(i,j,k)=phi_array(idx)!*mask(i,j)
+         enddo
+
+
+!            do idx=1,(imx+1)*(jmx+1)
+!            i=mod(idx-1,(imx+1))
+!            j=(idx-1)/(imx+1)
+!            phi(i,j,k)=phi_array(idx)!*mask(i,j)
+!            enddo
+         !         endif
+
+!       idx=1
+!       do 102, j=js,js+jw-1
+!          do  202,i=is,is+iw-1          
+!            idx = j*(imx+1)+i+1
+!            phi(i,j,k)=phi_array(idx)
+!            idx=idx+1
+!202       continue
+!102    continue
+         PetscCall(VecRestoreArrayReadF90(petsc_phi,phi_array,petsc_ierr))
+!          PetscCallA(VecRestoreArrayF90(petsc_phi, phi_array,petsc_ierr))
+
+         call  MPI_Allreduce(MPI_IN_PLACE, phi, (imx+1)*(jmx+1)*(kmx+1),MPI_Real8, MPI_SUM, MPI_COMM_WORLD,ierr)
+
+         do k=1,kmx
+            phi(:,:,k)=phi(:,:,0)
+         end do
          
 
-           call get_apar(-1)
+ !     end if
+      
+      
+ !        call MPI_Bcast( phi, (imx+1)*(jmx+1)*(kmx+1),MPI_Real8, 0, MPI_Comm_WORLD,ierr )
+      end if
+      
+         
+   
+
+!if(Myid==0)then
+!  open(935, file='flag_debug',status='unknown',position='append')
+!  write(935,*)'after ALL reduce'
+!  close(935)
+!end if
+          
+
+!            if (Myid==0) then
+!               open(unit=11, file = 'testphis',status='unknown',action='write')
+!               do j=0,jmx
+                  
+!                  write(11,*) phi(:,j,outk)-phi(:,j,outk+1)
+!                  enddo
+!                  close(11)
+!             endif
+
+ !              open(unit=11, file = 'testphis1',status='unknown',action='write')
+ !              do j=0,jmx
+                  
+ !                 write(11,*) phi(:,j,outk+1)
+ !                 enddo
+ !              close(11)
+      
+         
+
+         call get_apar(-1)
+!         call  smooth(apars,2)
            call get_jpar(apars)
+!           call smooth(jpar,3)
            call get_ne(-1)
-           
+!           write(*,*)"after 1st RK"
 
-           
-  open(935, file='flag_debug',status='unknown',position='append')
-  write(935,*)'before push, time=', timestep
-  close(935)
+!           if(myid==0)then
+!               open(unit=11, file = 'testapars',status='unknown',action='write')
+!               do j=0,jmx
+                  
+!                  write(11,*) apars(:,j,outk)-apars(:,j,outk+1)
+!                  enddo
+!                  close(11)
 
-  write(*,*)'before push, time=', timestep
-  end if
-  if (ifield_solver == 1) then
-  else
-!       if(ision==1)call ppush(timestep)
-       if(ifluid==1)call pintef
-       call MPI_BARRIER(MPI_COMM_WORLD,ierr)
-  endif
+!               open(unit=11, file = 'testjpars',status='unknown',action='write')
+!               do j=0,jmx
+                  
+!                  write(11,*) jpar(:,j,outk)-jpar(:,j,outk+1)
+!                  enddo
+!               close(11)   
 
 
- ! open(935, file='flag_debug',status='unknown',position='append')
- ! write(935,*)'timestep=', timestep
- ! close(935)
+ !              open(unit=11, file = 'testnes',status='unknown',action='write')
+ !              do j=0,jmx
+                  
+ !                 write(11,*) denes(:,j,outk)-denes(:,j,outk+1)
+ !                 enddo
+ !                 close(11)
+
+ !              open(unit=11, file = 'testBR',status='unknown',action='write')
+ !              do j=0,jmx
+                  
+ !                 write(11,*) b0x(:,j)
+ !                 enddo
+ !                 close(11)
+ !              end if
+
+
+               if(ision==1)call ppush(timestep)
+               if(ifluid==1)call integ(1)
+               
+
+          else
+             if(ision==1)call ppush(timestep)
+             !             if(ifluid==1)call pintef
+             if(ifluid==1)call integ(1)
+
+!             if(myid==0)then
+!                open(unit=11, file = 'testden',status='unknown',action='write')
+!                do j=0,jmx                 
+!                  write(11,*) den2d2(:,j)
+!                enddo
+!                  close(11)
+!              end if
+                 
+                
+!             call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+
+               
+            endif
+            
+ ! write(*,*)'before push, time=', timestep
+ ! write(*,*)'dx=', dx, 'dz=',dz
+!	   call push_wrapper(timestep,1)
+
 
 !	   call accumulate(timestep,1)
 !	   call ezamp
 !	   call gkps
 !	   call field(timestep,1)
 
-  if (ifield_solver .eq. 1) then
-do k=0,1!kmx
-      PetscCallA(KSPSetComputeRHS(ksp,ComputeRHS,k,petsc_ierr))
-!      PetscCallA(KSPSetUp(ksp,petsc_ierr))
-       PetscCallA(KSPSolve(ksp,PETSC_NULL_VEC,PETSC_NULL_VEC,petsc_ierr))
-       PetscCallA(KSPGetSolution(ksp,petsc_phi,petsc_ierr))
+     if (ifield_solver .eq. 1) then
+        phi=0.0
 
-       !     call VecGetArray(petsc_phi, phi_array, ierr)
+       if(i3D /= 0) then
+       do k=MyId*(kmx+1)/(numprocs),(MyId+1)*(kmx+1)/(numprocs)-1
+                 
+ !         write(*,*)'1k=', k
+         PetscCallA(KSPSetComputeRHS(ksp,ComputeRHS,k,petsc_ierr))
+         PetscCallA(KSPSolve(ksp,PETSC_NULL_VEC,PETSC_NULL_VEC,petsc_ierr))
+         PetscCallA(KSPGetSolution(ksp,petsc_phi,petsc_ierr))
+         PetscCallA(VecGetOwnershipRange(petsc_phi,vec_start,vec_end,petsc_ierr))
+         PetscCall(VecGetArrayReadF90(petsc_phi, phi_array, petsc_ierr))
 
-        PetscCall(VecGetArrayF90(petsc_phi, phi_array, petsc_ierr))
+         do idx=1, vec_end-vec_start
+            i=mod(idx-1,(iw))+is
+            j=(idx-1)/(iw)+js
+            phi(i,j,k)=phi_array(idx)!*mask(i,j)
+         enddo
+         PetscCall(VecRestoreArrayReadF90(petsc_phi,phi_array,petsc_ierr))
 
-    do idx=0,(imx+1)*(jmx+1)-1
-       i=mod(idx,(imx+1))
-       j=idx/(imx+1)
-             phi(i,j,k)=phi_array(idx)!*mask(i,j)
+      enddo
 
-          enddo
-!      if (k==0) then
- !              open(unit=11, file = 'testphi',status='unknown',action='write')
-  !             write(11,*) phi(:,:,0)
-   !            close(11)
-    !        endif
-            
-         
-    enddo
-    
-
-      call get_apar(0)
-      call get_jpar(apar)
-      call get_ne(0)
-
-   endif
-   
+      
+      call  MPI_Allreduce(MPI_IN_PLACE, phi, (imx+1)*(jmx+1)*(kmx+1),MPI_Real8, MPI_SUM, MPI_COMM_WORLD,ierr)
            
-!      open(unit=11, file = 'flag.dat',status='unknown',action='write')
-!      write(11,*) 'OK here'
-!      close(11)
-    if (ifield_solver == 1) then
+   else
+ !     if(petsc_rank==0)then
+
+      k=0
+         PetscCallA(KSPSetComputeRHS(ksp,ComputeRHS,k,petsc_ierr))
+         PetscCallA(KSPSolve(ksp,PETSC_NULL_VEC,PETSC_NULL_VEC,petsc_ierr))
+         PetscCallA(KSPGetSolution(ksp,petsc_phi,petsc_ierr))
+!         PetscCallA(VecGetOwnershipRange(petsc_phi,vec_start,vec_end,petsc_ierr))
+!         write(*,*) 'petsccolor=',petsc_color,'petsc_rank=',petsc_rank,'vec_start',vec_start,'vec_end',vec_end
+!         if (timestep==1.and.k==0)then
+!             PetscCall(VecGetArrayReadF90(petsc_phi, phi_array, petsc_ierr))
+!         endif
+
+!        if (petsc_rank==0)then
+         PetscCall(VecGetArrayReadF90(petsc_phi, phi_array, petsc_ierr))
+
+!         idx=0
+!         do j=0,jmx
+!            do i=0,imx
+!               idx=idx+1
+!               phi(i,j,k)=phi_array(idx)!*mask(i,j)
+!           end do
+  !       end do
+         
+         do idx=1, vec_end-vec_start
+            i=mod(idx-1,(iw))+is
+            j=(idx-1)/(iw)+js
+            phi(i,j,k)=phi_array(idx)!*mask(i,j)
+         enddo
+         
+!        idx=1
+!       do 104, j=js,js+jw-1
+!          do  204,i=is,is+iw-1          
+ !           idx = j*(imx+1)+i+1
+!            phi(i,j,k)=phi_array(idx)
+!            idx=idx+1
+!204       continue
+!104    continue
+!         end if
+         
+
+!            if(petsc_rank==0) then
+!              open(unit=11, file = 'testphi_array',status='unknown',action='write')
+!               do idx=1,vec_end-vec_start
+!                  write(11,*) phi_array(idx)
+!               enddo
+!               close(11)
+!            end if
+!            if(petsc_rank==1) then
+!              open(unit=12, file = 'testphi_array1',status='unknown',action='write')
+!               do idx=1,vec_end-vec_start
+!                  write(12,*) phi_array(idx)
+!               enddo
+!               close(12)
+!            end if
+            
+
+            PetscCall(VecRestoreArrayReadF90(petsc_phi,phi_array,petsc_ierr))
+
+         call  MPI_Allreduce(MPI_IN_PLACE, phi, (imx+1)*(jmx+1)*(kmx+1),MPI_Real8, MPI_SUM, MPI_COMM_WORLD,ierr)
+
+         do k=1,kmx
+            phi(:,:,k)=phi(:,:,0)
+         end do
+ !     end if
+
+!         call MPI_Bcast( phi, (imx+1)*(jmx+1)*(kmx+1),MPI_Real8, 0, MPI_Comm_WORLD,ierr )
+         
+   end if
+   
+
+
+
+
+
+
+               if(MyId==0 .and. mod(timestep,10)==0)then
+                  write(*,*)'outk=',outk
+
+               open(unit=11, file = 'testphi',status='unknown',action='write')
+               do j=0,jmx
+                  
+                  write(11,*) phi(:,j,outk)
+               enddo
+               
+               close(11)
+
+               end if
+            
+ 
+                  
+     
+
+    call get_apar(1)
+!    call smooth(apar,2)
+      call get_jpar(apar)
+!      call smooth(jpar,3)
+      call get_ne(1)
+
+
+!      if(ision==1)call ppush(timestep)
+!      if(ifluid==1)call integ(1)
+      
+
+       if(ision==1)call cpush(timestep)
+        !        if(ifluid==1)call cintef(timestep)
+       if(ifluid==1)call integ(2)
     else
         if(ision==1)call cpush(timestep)
-        if(ifluid==1)call cintef(timestep)
-        call MPI_BARRIER(MPI_COMM_WORLD,ierr)
-    endif
+        !        if(ifluid==1)call cintef(timestep)
+        if(ifluid==1)call integ(2)
+        !        call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+     end if
+     
 
- ! open(935, file='flag_debug',status='unknown',position='append')
- ! write(935,*)'timestep=', timestep
- ! close(935)
-!sp    if(myid.eq.master .and. mod(timestep,xnplt)==0)then
-!sp       open(9,file='plot',status='unknown',position='append')
-!sp       m = 2
-!sp       i = 4
-!sp       write(9,10)timestep,(x2(m+i*j),z2(m+i*j),j=1,7)
-!sp 10    format(1x,i6,16(1x,e10.3))
-!sp       close(9)
-!sp    endif
+        if(myid==0 .and. mod(timestep,10)==0)then
+!           open(unit=11, file = 'testdepo_posi',status='unknown',action='write')
+!           do j=mmx-100000,mmx
+!              write(11,*) x3(j),z3(j),zeta3(j)
+!           enddo
+!           close(11)
+           open(unit=11, file = 'testden2',status='unknown',action='write')
+           do j=0,jmx
+              write(11,*) den2d2(:,j)
+           enddo
+           close(11)
+           open(unit=11, file = 'testdiffden',status='unknown',action='write')
+           do j=0,jmx
+              write(11,*) dden2d(:,j)
+           enddo
+           open(unit=11, file = 'testupar',status='unknown',action='write')
+           do j=0,jmx
+              write(11,*) upar(:,j,0)
+           enddo
+           close(11)
+        end if
+        
+
+    
+
+     call outd(timestep)
+
+         if(MyId==0 .and. ifield_solver==1 .and. mod(timestep,10)==0) then    
+               open(unit=11, file = 'testapar',status='unknown',action='write')
+               do j=0,jmx
+                  
+                  write(11,*) apar(:,j,outk)
+                  enddo
+                  close(11)
+
+               open(unit=11, file = 'testjpar',status='unknown',action='write')
+               do j=0,jmx
+                  
+                  write(11,*) jpar(:,j,outk)
+                  enddo
+               close(11)   
+
+
+               open(unit=11, file = 'testne',status='unknown',action='write')
+               do j=0,jmx
+                  
+                  write(11,*) dene(:,j,outk)
+                  enddo
+                  close(11)
+
+               open(unit=11, file = 'testphi_r_phi',status='unknown',action='write')
+               do k=0,kmx
+                  
+                  write(11,*) phi(:,mid_j,k)
+                  enddo
+               close(11)
+            end if
+            
+
+
+
+
+           if(myid.eq.master .and. mod(timestep,xnplt)==0)then
+              open(9,file='plot',status='unknown',position='append')
+              m = 2
+              i = 4
+              write(9,10)timestep,(x2(m+i*j),z2(m+i*j),j=1,7)
+ 10           format(1x,i6,16(1x,e10.3))
+              close(9)
+           end if
+
+           if(myid.eq.master .and. ifield_solver.eq.1)then
+              open(unit=11, file = 'testAtPhitrhotjt',status='unknown',position='append')                
+              !write(11,*)apar(mid_i,mid_j,outk),phi(mid_i,mid_j,outk),dene(mid_i,mid_j,outk),jpar(mid_i,mid_j,outk)
+              write(11,*)apar(387,256,outk),phi(387,256,outk),dene(387,256,outk),jpar(387,256,outk)
+              close(11)
+              if(mod(timestep,100)==0)then
+                 open(unit=11, file = 'testPhit',status='unknown',position='append')
+                 write(11,*)phi(:,:,outk)
+              end if
+              
+                 
           
+           write(*,*)'time_step=', timestep
+           write(*,*)'dx=', dx, 'dz=',dz,'dzeta=',dzeta,'omega_A0=', tor_n/(Rgrid(mid_i)/xu*sqrt(c2_over_vA2(mid_i,mid_j)))
+           write(*,*)'v_A=', 1/sqrt(c2_over_vA2(mid_i,mid_j)), 'Omega_i=', q(1)*b0(mid_i,mid_j)/mims(1)
+        end if
+        
 
-
- !  open(935, file='flag_debug',status='unknown',position='append')
- ! write(935,*)'finial of particle push in a step.'
- ! close(935)
-
-           call outd(timestep)
-         end do
-
-
-!               open(unit=11, file = 'debug.dat',status='unknown',action='write')
-!      write(11,*) dR
-!      close(11)
+!        write(*,*) timestep
+ end do
+end_total_tm = MPI_WTIME()
+total_tm = total_tm + end_total_tm - start_total_tm
+        call MPI_reduce(ppush_tm, tmp, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+        if(myid==0)ppush_tm = tmp/real(numprocs)
+        call MPI_reduce(cpush_tm, tmp, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+        if(myid==0)cpush_tm = tmp/real(numprocs)
+        call MPI_reduce(integ_tm, tmp, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+        if(myid==0)integ_tm = tmp/real(numprocs)
+        call MPI_reduce(total_tm, tmp, 1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+        if(myid==0)total_tm = tmp/real(numprocs)
+        if(myid==0)open(123, file = "gemx_timing.txt", status = "replace", action="write")
+        if(myid==0)write(123,*)'ppush time', ppush_tm, 'cpush time', cpush_tm, 'integ time', integ_tm, 'total time', total_tm, 'other (including field solver)', total_tm - ppush_tm - cpush_tm- integ_tm
+        if(myid==0)call flush(123)
+        if(myid==0)close(123)
+! if(myid.eq.master .and. ifield_solver.eq.1)then
+!              open(unit=11, file = 'testphi',status='unknown',action='write')
+!               do j=0,jmx
+                  
+!                  write(11,*) phi(:,j,outk)
+!                  enddo
+!                  close(11)
+!               endif
+               
 	 lasttm=MPI_WTIME()
   tottm=lasttm-starttm
 
 
-       PetscCallA(KSPDestroy(ksp,petsc_ierr))
-       PetscCallA(DMDestroy(dm,petsc_ierr))
+ !      PetscCallA(KSPDestroy(ksp,petsc_ierr))
+ !      PetscCallA(DMDestroy(dm,petsc_ierr))
        PetscCallA(PetscFinalize(petsc_ierr))
 
  100     call MPI_FINALIZE(ierr)
@@ -294,7 +723,7 @@ do k=0,1!kmx
       implicit none
       character*(62) dumchar
       INTEGER :: i,j,k,n,ns,idum,i1,k1,m,j1
-      INTEGER :: lr1                                      
+      INTEGER :: mm1,lr1
       REAL(8) :: x,z,dum,zdum
       REAL(8) :: dbdrp,dbdtp,bfldp,upae0p,dnuobdrp,dnuobdtp,btorp,bxp,bzp
       REAL(8) :: gn0ip,gn0ep,gt0ip,gt0ep,capnxp,capnzp
@@ -322,25 +751,28 @@ do k=0,1!kmx
       read(115,*) dumchar
       read(115,*) beta,nonlin,nonline,vcut
       read(115,*) dumchar
-      read(115,*) ntracer,ifield_solver                              
+      read(115,*) ntracer,ifield_solver,i3D,iBoltzmann,icollision
+      read(115,*) dumchar
+      read(115,*) psi_max,psi_min,R_min,Z_min, Z_internal, psi_div,psi_a
+!      read(115,*) mm1
       close(115)
-      if(myid.eq.master)then
-         open(9,file='plot',status='unknown',position='append')
-         write(9,*)'dt,beta= ',dt, beta
-         write(9,*)'imx,jmx,kmx,ntracer= ',imx,jmx,kmx,ntracer
-         close(9)
-      end if
-
+!      if(myid.eq.master)then
+!         open(9,file='plot',status='unknown',position='append')
+!         write(9,*)'dt,beta= ',dt, beta
+!         write(9,*)'imx,jmx,kmx,mm1= ',imx,jmx,kmx,mm1
+!         close(9)
+!      end if
+      
       nsm=1
       
       call new_gem_com()
       ns = 1
-      tmm(ns)=ntracer                               
-      mm(ns)=int(ntracer/numprocs)                   
-
+      tmm(ns)=mmx!ntracer
+!      mm(ns)=int(ntracer/numprocs)
+      mm(ns)=mmx
 !     write(*,*)'in init  ',Myid,mm(ns)
-      mims(ns)=1.0
-      q(ns)=1.0
+      mims(ns)=2.0*1.67e-27
+      q(ns)=1.0*1.6e-19
       lr(ns)=4
 
       emass = 1./amie
@@ -349,11 +781,11 @@ do k=0,1!kmx
       call new_equil()
       lx = xdim
       lz = zdim
-      
+
       if(myid.eq.master)then
          open(9,file='plot',status='unknown',position='append')
          write(9,*)'a,rmaj0,lx,lz= ',a,rmaj0,lx,lz
-         write(9,*)'xctr,xdim=',xctr,xdim
+         write(9,*)'xctr,xdim=',xctr,xdim         
          close(9)
       end if
 
@@ -361,9 +793,9 @@ do k=0,1!kmx
 
       if(iget.eq.1) amp=0.
 
-      dx=lx/float(imx)
-      dz=lz/float(jmx)
-      dzeta=pi2/kmx
+      dx=lx/real(imx)
+      dz=lz/real(jmx)
+      dzeta=pi2/(kmx+1)
 !     
       do 10 i=0,imx
          xg(i)=i*dx 
@@ -449,13 +881,12 @@ do k=0,1!kmx
          open(9,file='plot',status='unknown',position='append')
          write(9,*)'inner,outer = ',xctr-xdim/2,xctr+xdim/2
          write(9,*)'mi,qi=',mims(1),q(1)
-         write(9,*)'mm(1)=',mm(1)
+         write(9,*)'mm(1)=',mm(1)         
          close(9)
       end if
 
       return
       end
-
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine grad(ip)
   
@@ -662,67 +1093,91 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
       !real,dimension(nx,nz,nzeta)::nepredict,aparpredic
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-      subroutine get_apar(flagnumner)
+      subroutine get_apar(flagnumber)
          use gem_com
          use equil
 
+         IMPLICIT NONE
 
-         integer flagnumner, i, j, k
-         if (flagnumner == -1) then
-            apars=apar-0.5*dt*(gradpar(phi)) !+Epar)
+         integer::flagnumber, i, j, k
+!         real:: E_par
+
+         
+         if (flagnumber == -1) then
+            
+            apars=apar-0.5*dt*(gradpar(phi))!+0.04*(jpar+q(1)*mu0*upar)) !+Epar)
             else
-               apar = apar -dt*(gradpar(phi)) !+Epar)    
+               apar = apar -dt*(gradpar(phi))!+0.04*(jpar+q(1)*mu0*upar)) !+Epar)    
             endif
-         !   do k=0,kmx-1
-         !      apar=apra(0:imx-1,0:jmx-1,k)*mask
-         !   end do
+          
+
+          CONTAINS
+
+            function  gradparz(matrix)
+              real,dimension(0:imx,0:jmx,0:kmx)::matrix,gradparz
+              call gradz(matrix,gradparz)
+              do k=0,kmx
+                 do i=0,imx
+                    do j=0,jmx
+                       gradparz(i,j,k)=0.5*gradparz(i,j,k)*mask2(i,j)
+                    end do
+                 end do
+              end do
+              
+            end function gradparz
             
 
 
 
-
-
-      CONTAINS
-
       function  gradpar(matrix)
    !   use gem_com
    !   use equil
-      real,dimension(0:imx,0:jmx,0:kmx)::matrix,gradpar
+        real,dimension(0:imx,0:jmx,0:kmx)::matrix,gradpar
+
+        gradpar=0
  !     real,dimension(nx,nz,nzeta+4)::ghostmatrix
       
 
  !     ghostmetric(:,:,0:1)=matrix(:,:,nzeta-2:nzeta-1)
  !     ghostmetric(:,:,2:nzeta+1)=matrix(:,:,0:nzeta-1)
  !     ghostmetric(:,:,nzeta+2:nzeta+3)=matrix(:,:,0:1)
-      do k=1,(kmx-2)
-         do i=2,(imx-3)
-            do j=2,(jmx-3)
+      do k=1,(kmx-1)
+         do i=2,(imx-2)
+            do j=2,(jmx-2)
+               if (mask2(i,j)<1.99)then
+               else
                gradpar(i,j,k)=(b0x(i,j)/b0(i,j)*(matrix(i+1,j,k)-matrix(i-1,j,k))*0.5/dx  &
                +b0z(i,j)/b0(i,j)*(matrix(i,j+1,k)-matrix(i,j-1,k))*0.5/dz                &
-               +b0zeta(i,j)/b0(i,j)*(matrix(i,j,k+1)-matrix(i,j,k-1))*kmx/(Rgrid(i)*4*pi))*mask(i,j)
-               
+               +b0zeta(i,j)/b0(i,j)*(matrix(i,j,k+1)-matrix(i,j,k-1))/((Rgrid(i)/xu)*2*dzeta))
+               endif
             enddo
          enddo
       enddo
 
-         do i=2,(imx-3)
-            do j=2,(jmx-3)
+         do i=2,(imx-2)
+            do j=2,(jmx-2)
+               if (mask2(i,j)<1.99)then
+               else
                gradpar(i,j,0)=(b0x(i,j)/b0(i,j)*(matrix(i+1,j,0)-matrix(i-1,j,0))*0.5/dx  &
                +b0z(i,j)/b0(i,j)*(matrix(i,j+1,0)-matrix(i,j-1,0))*0.5/dz                &
-               +b0zeta(i,j)/b0(i,j)*(matrix(i,j,1)-matrix(i,j,nzeta))*kmx/(Rgrid(i)*4*pi))*mask(i,j)
+               +b0zeta(i,j)/b0(i,j)*(matrix(i,j,1)-matrix(i,j,kmx))/((Rgrid(i)/xu)*2*dzeta))
+               endif
             enddo
          enddo
 
 
-         do i=2,(imx-3)
-            do j=2,(jmx-3)
-               gradpar(i,j,kmx-1)=(b0x(i,j)/b0(i,j)*(matrix(i+1,j,kmx-1)-matrix(i-1,j,kmx-1))*0.5/dx  &
-               +b0z(i,j)/b0(i,j)*(matrix(i,j+1,kmx-1)-matrix(i,j-1,kmx-1))*0.5/dz                        &
-               +b0zeta(i,j)/b0(i,j)*(matrix(i,j,0)-matrix(i,j,kmx-2))*kmx/(Rgrid(i)*4*pi))*mask(i,j)
+         do i=2,(imx-2)
+            do j=2,(jmx-2)
+               if (mask2(i,j)<1.99)then
+               else
+               gradpar(i,j,kmx)=(b0x(i,j)/b0(i,j)*(matrix(i+1,j,kmx)-matrix(i-1,j,kmx))*0.5/dx  &
+               +b0z(i,j)/b0(i,j)*(matrix(i,j+1,kmx)-matrix(i,j-1,kmx))*0.5/dz                        &
+               +b0zeta(i,j)/b0(i,j)*(matrix(i,j,0)-matrix(i,j,kmx-1))/((Rgrid(i)/xu)*2*dzeta))
+               endif
             enddo
          enddo
       
- !     return
+      return
       end function gradpar
       end subroutine get_apar
 
@@ -733,14 +1188,24 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
       subroutine get_jpar(matrix)
          use gem_com
          use equil
-         real, dimension(0:imx-1,0:jmx-1,0:kmx-1):: matrix
-         integer i,j,k
-         do k=0,kmx-1
-            do i=2,imx-3
-               do j=2,jmx-3
-                  jpar(i,j,k)=(-(matrix(i+1,j,k)+matrix(i-1,j,k)-2*matrix(i,j,k))/dx**2       &
+         IMPLICIT NONE
+         real, dimension(0:imx,0:jmx,0:kmx):: matrix
+         integer::i,j,k,k0
+
+         k0=0
+         
+!         if (i3d/=0) k0=k
+         do k=0,kmx
+!            if (i3d/=0) k0=k
+            do i=2,imx-2
+               do j=2,jmx-2
+                  if (mask3(i,j)<2.99)then
+                  else                     
+                      jpar(i,j,k)=(-(matrix(i+1,j,k)+matrix(i-1,j,k)-2*matrix(i,j,k))/dx**2       &
                                  -(matrix(i,j+1,k)+matrix(i,j-1,k)-2*matrix(i,j,k))/dz**2   &
-                                 -(matrix(i+1,j,k)-matrix(i-1,j,k))*0.5/(dx*Rgrid(i)))*mask(i,j)
+                                 -(matrix(i+1,j,k)-matrix(i-1,j,k))*0.5/(dx*Rgrid(i)/xu))  &
+                                 -q(1)*mu0*upar(i,j,k)
+                  endif
                enddo
             enddo
          enddo
@@ -752,65 +1217,108 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
          end subroutine get_jpar
 
  !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-         subroutine get_ne(flagnumner)
+         subroutine get_ne(flagnumber)
             use gem_com
             use equil
 
+            IMPLICIT NONE
 
-
-            integer flagnumner, i, j, k
-            if (flagnumner == -1) then
-               denes=dene-0.5*dt*(gradpar(jpar)) 
-               else
-                  dene = dene -dt*(gradpar(jpar))   
+            integer::flagnumber, i, j, k
+!            real,dimension(0:imx,0:jmx):: omega_A_0
+            
+            
+            if (flagnumber == -1) then
+               denes=dene+0.5*dt*(gradpar(jpar)) 
+               elseif (flagnumber ==1) then
+                  dene = dene + dt*(gradpar(jpar))
+               elseif (flagnumber ==0) then
+              !    dene=gradpar(jpar)
+                  do i=2,imx-2
+                     do j=2,jmx-2
+                        do k=0,kmx
+                           if(mask4(i,j)==4)then
+                              dene(i,j,k)=jpar(i,j,k)*sqrt(c2_over_vA2(i,j))
+                           end if
+                           
+                        enddo
+                     enddo               
+                  enddo      
                endif
-
-           !    do k=0,kmx-1
-           !       dene=dene(:,:,k)*mask
-           !    end do
+               if (i3D==0) then
+                  do k=1,kmx
+                     if (flagnumber ==-1)then
+                        denes(:,:,0)=denes(:,:,0)+denes(:,:,k)
+                     else
+                        dene(:,:,0)=dene(:,:,0)+dene(:,:,k)
+                     end if
+                  end do
+                  if (flagnumber ==-1)then
+                     denes=denes/(kmx+1)
+                  else
+                     dene=dene/(kmx+1)
+                  end if
+               end if
                
-   
-   
-   
-   
+               
+  
    
          CONTAINS
-   
+           function  gradparz(matrix)
+           real,dimension(0:imx,0:jmx,0:kmx)::matrix,gradparz
+           call gradz(matrix,gradparz)
+
+              do k=0,kmx
+                 do i=0,imx
+                    do j=0,jmx
+                       gradparz(i,j,k)=0.25*gradparz(i,j,k)*mask4(i,j)
+                    end do
+                 end do
+              end do
+         end function gradparz
+         
+         
+
          function  gradpar(matrix)
       !   use gem_com
       !   use equil
-         real,dimension(0:imx,0:jmx,0:kmx)::matrix,gradpar
-    !     real,dimension(nx,nz,nzeta+4)::ghostmatrix
-    !     integer i,j,k
-   
-    !     ghostmetric(:,:,0:1)=matrix(:,:,nzeta-2:nzeta-1)
-    !     ghostmetric(:,:,2:nzeta+1)=matrix(:,:,0:nzeta-1)
-    !     ghostmetric(:,:,nzeta+2:nzeta+3)=matrix(:,:,0:1)
-         do k=1,(kmx-2)
-            do i=2,(imx-3)
-               do j=2,(jmx-3)
+           real,dimension(0:imx,0:jmx,0:kmx)::matrix,gradpar
+
+           gradpar=0
+
+         do k=1,(kmx-1)
+            do i=2,(imx-2)
+               do j=2,(jmx-2)
+                  if (mask4(i,j)<3.99)then
+                  else                
                   gradpar(i,j,k)=(b0x(i,j)/b0(i,j)*(matrix(i+1,j,k)-matrix(i-1,j,k))*0.5/dx  &
                   +b0z(i,j)/b0(i,j)*(matrix(i,j+1,k)-matrix(i,j-1,k))*0.5/dz                &
-                  +b0zeta(i,j)/b0(i,j)*(matrix(i,j,k+1)-matrix(i,j,k-1))*kmx/(Rgrid(i)*4*pi))*mask(i,j)
+                  +b0zeta(i,j)/b0(i,j)*(matrix(i,j,k+1)-matrix(i,j,k-1))/(Rgrid(i)/xu*2*dzeta))
+                  endif
                enddo
             enddo
          enddo
    
-            do i=2,(imx-3)
-               do j=2,(jmx-3)
+            do i=2,(imx-2)
+               do j=2,(jmx-2)
+                  if (mask4(i,j)<3.99)then
+                  else                     
                   gradpar(i,j,0)=(b0x(i,j)/b0(i,j)*(matrix(i+1,j,0)-matrix(i-1,j,0))*0.5/dx  &
                   +b0z(i,j)/b0(i,j)*(matrix(i,j+1,0)-matrix(i,j-1,0))*0.5/dz                &
-                  +b0zeta(i,j)/b0(i,j)*(matrix(i,j,1)-matrix(i,j,nzeta))*kmx/(Rgrid(i)*4*pi))*mask(i,j)
+                  +b0zeta(i,j)/b0(i,j)*(matrix(i,j,1)-matrix(i,j,kmx))/(Rgrid(i)/xu*2*dzeta))!*mask(i,j)
+                  endif
                enddo
             enddo
    
 
 
-         do i=2,(imx-3)
-            do j=2,(jmx-3)
-               gradpar(i,j,kmx-1)=(b0x(i,j)/b0(i,j)*(matrix(i+1,j,kmx-1)-matrix(i-1,j,kmx-1))*0.5/dx  &
-               +b0z(i,j)/b0(i,j)*(matrix(i,j+1,kmx-1)-matrix(i,j-1,kmx-1))*0.5/dz                        &
-               +b0zeta(i,j)/b0(i,j)*(matrix(i,j,0)-matrix(i,j,kmx-2))*kmx/(Rgrid(i)*4*pi))*mask(i,j)
+         do i=2,(imx-2)
+            do j=2,(jmx-2)
+               if (mask4(i,j)<3.99)then
+               else                  
+               gradpar(i,j,kmx)=(b0x(i,j)/b0(i,j)*(matrix(i+1,j,kmx)-matrix(i-1,j,kmx))*0.5/dx  &
+               +b0z(i,j)/b0(i,j)*(matrix(i,j+1,kmx)-matrix(i,j-1,kmx))*0.5/dz                        &
+               +b0zeta(i,j)/b0(i,j)*(matrix(i,j,0)-matrix(i,j,kmx-1))/(Rgrid(i)/xu*2*dzeta))!*mask(i,j)
+               endif
             enddo
          enddo
 
@@ -818,7 +1326,15 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
            
     !     return
          end function gradpar
-         end subroutine get_ne
+       end subroutine get_ne
+
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+ !      subroutine get_ne0()
+ !        use gem_com
+ !        use equil
+
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc       
 !      jpar=-gradper2(apars(:,:,:))
 !      denes=dene+0.5*dt*gradpar(jpar(:,:,:))
 !      phi=gkpoisson(denes(:,:,:))
@@ -1016,7 +1532,9 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
          ran2 = temp
       end if
       return
-      end
+    end function ran2
+    
+
 
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine loadi
@@ -1027,10 +1545,11 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
       INTEGER :: i,j,k,m,idum,ns,m1
       REAL(8) :: vpar,vperp2,r,x,z,b,ter,bfldp
       REAL(8) :: avgv,myavgv,avgw,myavgw
-      real(8) :: dumx,dumy,dumz,jacp
-      REAL(8) :: wx0,wx1,wz0,wz1
+      real(8) :: dumx,dumy,dumz,jacp,rand(4)
+      REAL(8) :: wx0,wx1,wz0,wz1,avex=0
 
       cnt=int(tmm(1)/numprocs)
+      cnt=mmx
 !   write(*,*)'in loader cnt, mm(1)=',cnt,mm(1)
 
       myavgv=0.
@@ -1043,17 +1562,28 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
       do while(m<=mm(1))
 !     load a slab of ions...
 
-!         dumx=xdim*ran2(iseed)  !revers(MyId*cnt+j,2) !ran2(iseed)
-         dumx=0.85*xdim+0.13*xdim*ran2(iseed)  !revers(MyId*cnt+j,2) !ran2(iseed)
-         dumy=0.55*zdim+0.1*zdim*ran2(iseed) !revers(MyId*cnt+j,3) !ran2(iseed)
+!         call random_number(rand)
+!         dumx=xdim*(ran2(iseed)+0.01)*0.9
+!         dumy=zdim*(ran2(iseed)+0.01)*0.9
+
+         !revers(MyId*cnt+j,2) !ran2(iseed)
+         dumx=2*dxeq+(xdim-4*dxeq)*ran2(iseed)  !revers(MyId*cnt+j,2) !ran2(iseed)
+         dumy=2*dzeq+(zdim-4*dzeq)*ran2(iseed) !revers(MyId*cnt+j,3) !ran2(iseed)
          dumz=pi2*ran2(iseed) !revers(MyId*cnt+j,5) !ran2(iseed)
+
+
+!         dumx=dxeq+(xdim-2*dxeq)*m/((mm(1)))
+         
          r = xctr-xdim/2+dumx
          jacp = r/(xctr+xdim/2)
-         if(ran2(iseed)<jacp)then
-            x2(m)=min(dumx,xdim-1.d-8)
-            z2(m)=min(dumy,zdim-1.d-8)
+!         if(ran2(iseed)<jacp)then
+!            x2(m)=min(dumx,xdim-dxeq)
+!            z2(m)=min(dumy,zdim-dzeq)
+!            x2(m)=max(dumx,dxeq)
+!            z2(m)=max(dumz,dzeq)
             zeta2(m)=dumz
-
+            x2(m)=dumx
+            z2(m)=dumy
             call parperp(vpar,vperp2,m,pi,cnt,MyId)
 
             x=x2(m)
@@ -1077,13 +1607,34 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
             myavgv=myavgv+u2(m)
 
 !    LINEAR: perturb w(m) to get linear growth...
-            w2(m)=2.*amp*ran2(iseed)
+!            w2(m)=2.*amp*ran2(iseed)
+            w2(m)= (wx0*wz0*xn0i(i,k)+wx0*wz1*xn0i(i,k+1) &
+                 +wx1*wz0*xn0i(i+1,k)+wx1*wz1*xn0i(i+1,k+1))*r/xctr*((imx-3)*(jmx-3)*(kmx+1))/(numprocs*mmx)!*xctr/(x+xctr-xdim/2.)
+!            w2(m) = r/xctr*((imx-1)*(jmx-1)*(kmx+1))/(numprocs*mmx)
+ 
+               
 
+            
             myavgw=myavgw+w2(m)
             m = m+1            
-         end if
-      end do
+ !        end if
+         end do
 
+!             do i=1,mmx
+!                avex=avex+x2(i)
+!             end do
+!         write(*,*)avex/mmx
+             if (MyId==0) then
+
+         open(unit=11, file = 'testdepo_posi',status='unknown',action='write')
+               do j=mmx-10000,mmx
+                  
+                  write(11,*) x2(j),z2(j),zeta2(j)
+               enddo
+               close(11)
+             end if
+
+      
       myavgw = myavgw/mm(1)
 
       call MPI_ALLREDUCE(myavgv,avgv,1, &
@@ -1141,15 +1692,8 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
       enddo
 
       return
-      end
-
-
-
-
-
-
-
-
+    end subroutine gradu
+    
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine gradz(u,uz)
       use gem_com
@@ -1161,37 +1705,42 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
       real(8) :: wx0,wx1,wz0,wz1,uleft,uright
 
       uz = 0.
-      do k = 0,kmx-1
+      do k = 0,kmx
          kleft = k-1
-         if(k==0)kleft=kmx-1
+         if(k==0)kleft=kmx
          kright = k+1
+         if(k==kmx)kright = 0
          do i = 1,imx-1
             do j=1,jmx-1
-               wx0 = ((ileft(i,j)+1)*dx-xg(i))/dx
+               wx0 = ((ileft(i,j)+1)*dx-xbackw(i,j))/dx
                wx1 = 1.0-wx0
-               wz0 = ((jleft(i,j)+1)*dz-zg(i))/dz
+               wz0 = ((jleft(i,j)+1)*dz-zbackw(i,j))/dz
                wz1 = 1.0-wz0
+  !             write(*,*)i,wx0,wx1
+  !             write(*,*)j,wz0,wz1
                uleft = wx0*wz0*u(ileft(i,j),jleft(i,j),kleft) &
                       +wx1*wz0*u(ileft(i,j)+1,jleft(i,j),kleft) &
                       +wx0*wz1*u(ileft(i,j),jleft(i,j)+1,kleft) &
                       +wx1*wz1*u(ileft(i,j)+1,jleft(i,j)+1,kleft)
-               wx0 = ((iright(i,j)+1)*dx-xg(i))/dx
+               wx0 = ((iright(i,j)+1)*dx-xforw(i,j))/dx
                wx1 = 1.0-wx0
-               wz0 = ((jright(i,j)+1)*dz-zg(i))/dz
+               wz0 = ((jright(i,j)+1)*dz-zforw(i,j))/dz
                wz1 = 1.0-wz0
                uright = wx0*wz0*u(iright(i,j),jright(i,j),kright) &
                       +wx1*wz0*u(iright(i,j)+1,jright(i,j),kright) &
                       +wx0*wz1*u(iright(i,j),jright(i,j)+1,kright) &
                       +wx1*wz1*u(iright(i,j)+1,jright(i,j)+1,kright)
 
-               uz(i,j,k)=(uright-uleft)/(2.*dzeta)
+ !              write(*,*) uright, uleft
+               uz(i,j,k)=(uright-uleft)/(2.*b0(i,j)/b0zeta(i,j)*dzeta*Rgrid(i)/xu)
             enddo
          enddo
       enddo
-      uz(:,:,kmx) = uz(:,:,0)
+ !     uz(:,:,kmx) = uz(:,:,0)
 
       return
-      end
+    end subroutine gradz
+    
 
 
 
@@ -1210,7 +1759,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
         real(8),dimension(0:1) :: x,y
 	integer :: n,i,j,k,ip
         
-        call ppinit(MyId,numprocs,ntube,TUBE_COMM,GRID_COMM)
+        call ppinit(MyId,numprocs,ntube,kmx,i3D,TUBE_COMM,GRID_COMM, PETSC_COMM,petsc_color,petsc_rank)
 
 !     reset timestep counter.
          Last=numprocs-1
@@ -1233,11 +1782,27 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
          n0=float(tmm(1))/totvol
 
 
+!         do k=0,kmx
+!            den_pre(:,:,k)=xn0i
+!         end do
+         
+         
          call MPI_BARRIER(MPI_COMM_WORLD,ierr)
 
          ncurr = 1
 
 	end
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+subroutine accumulate(n,ip)
+         use gem_com
+         use equil
+	implicit none
+
+	integer :: n,i,j,k,ip
+	call grid1(ip,n)
+	if(idg.eq.1)write(*,*)'pass grid1'
+        call MPI_BARRIER(MPI_COMM_WORLD,ierr)        
+end subroutine accumulate
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine field(n,ip)
          use gem_com
@@ -1256,7 +1821,8 @@ subroutine field(n,ip)
         call eqmo(ip)
 
 end subroutine field
-!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine pintef
       use gem_com
       use equil
@@ -1292,7 +1858,8 @@ end subroutine field
       end do
 
       return
-      end
+    end subroutine pintef
+    
 
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine cintef(n)
@@ -1322,11 +1889,15 @@ end subroutine field
       real(8) :: ux(0:imx,0:jmx,0:1),uy(0:imx,0:jmx,0:1)
       real(8) :: x,z,zeta,dzt,rdum,dum1,wz0,wz1,wx0,wx1
       real(8) :: bp,bxp,bzp,radiusp,btorp
-      
+
+
+     
       dzt = dzeta/float(m)
       do i = 1,imx-1
-         x = xg(i)
+!         x = xg(i)
+!         if (i==257)write(*,*)xg(i)
          do j = 1,jmx-1
+            x= xg(i)
             z = zg(j)
             do k = 0,m-1
                i1 = int(x/dxeq)
@@ -1348,23 +1919,45 @@ end subroutine field
                  +wx1*wz0*b0z(i1+1,j1)+wx1*wz1*b0z(i1+1,j1+1) 
                btorp = wx0*wz0*b0zeta(i1,j1)+wx0*wz1*b0zeta(i1,j1+1) &
                  +wx1*wz0*b0zeta(i1+1,j1)+wx1*wz1*b0zeta(i1+1,j1+1) 
-               radiusp = xctr-xdim/2+x               
+               radiusp = xctr-xdim/2+x
+ !              if(i==257.and.j==257) then
+ !              write(*,*)x
+ !              write(*,*)bxp
+ !              write(*,*)bzp
+ !              write(*,*)btorp
+ !              write(*,*)radiusp
+ !              write(*,*)dx
+ !              write(*,*)dz
+ !              write(*,*)dzt*radiusp*bxp/btorp
+ !              end if
+            
                x = x+dzt*radiusp*bxp/btorp
+ !             if(i==257.and.j==257) then
+ !              write(*,*)x-xg(i)
+ !            end if
                x = min(x,lx)
-               x = max(x,0.)               
+               x = max(x,0.)
+ !            if(i==257.and.j==257) then
+ !              write(*,*)x-xg(i)
+ !            end if
+            
                z = z+dzt*radiusp*bzp/btorp
                z = min(z,lz)
                z = max(z,0.)
             end do
             iright(i,j) = int(x/dx)
-            jright(i,j) = int(z/dx)
+            jright(i,j) = int(z/dz)
+            xforw (i,j) =x
+            zforw(i,j)=z
+  !          write(*,*)i,iright(i,j),j,jright(i,j)
          end do
       end do
 
       dzt = -dzeta/float(m)
       do i = 1,imx-1
-         x = xg(i)
+!         x = xg(i)
          do j = 1,jmx-1
+            x = xg(i)
             z = zg(j)
             do k = 0,m-1
                i1 = int(x/dxeq)
@@ -1395,39 +1988,44 @@ end subroutine field
                z = max(z,0.)
             end do
             ileft(i,j) = int(x/dx)
-            jleft(i,j) = int(z/dx)
+            jleft(i,j) = int(z/dz)
+            xbackw(i,j)=x
+            zbackw(i,j)=z
+ !           write(*,*)i,ileft(i,j),j,jleft(i,j)
          end do
       end do
 
       return
-      end
+    end subroutine weight
+    
+ 
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 
 
  
-       subroutine ComputeInitialGuess(ksp,b,ctx,ierr)
+       subroutine ComputeInitialGuess(ksp,init_guess,ctx,ierr)
        use petscksp
        implicit none
        PetscErrorCode  ierr
        KSP ksp
        PetscInt ctx(*)
-       Vec b
+       Vec init_guess
        PetscScalar  h
 
        h=0.0
-       PetscCall(VecSet(b,h,ierr))
+       PetscCall(VecSet(init_guess,h,ierr))
        end subroutine
        !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-      subroutine ComputeMatrix(ksp,A,B,dummy,ierr)
+      subroutine ComputeMatrix(ksp,AA,BB,dummy,ierr)
       use petscksp
       use gem_com
       use equil
        implicit none
        PetscErrorCode  ierr
        KSP ksp
-       Mat A,B
+       Mat AA,BB
        integer dummy(*)
        DM dm
        integer :: ii,jj
@@ -1444,21 +2042,27 @@ end subroutine field
       PetscCall(KSPGetDM(ksp,dm,ierr))
       PetscCall(DMDAGetInfo(dm,PETSC_NULL_INTEGER,mx,my,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,ierr))
 
-      Hx = (Rgrid(imx)-Rgrid(0)) / real(imx)
-      Hy = (Zgrid(jmx)-Zgrid(0)) / real(jmx)
+      Hx =dx! (Rgrid(imx)-Rgrid(0)) / real(imx)
+      Hy =dz!(Zgrid(jmx)-Zgrid(0)) / real(jmx)
+
       Hx2 = Hx**2
       Hy2 = Hy**2
       PetscCall(DMDAGetCorners(dm,xs,ys,PETSC_NULL_INTEGER,xm,ym,PETSC_NULL_INTEGER,ierr))
       do 10,j=ys,ys+ym-1
          do 20, i=xs,xs+xm-1
+ !           if((i<2.and.j<2).or.(i>imx-3.and.j>jmx-3))then
+!               write(*,*)'xs,xm=',xs,xm, 'ys,ym=',ys,ym
+!            endif
            ! i=ii
            ! j=jj
           row(MatStencil_i) = i
           row(MatStencil_j) = j
 !          tmp_r = sqrt(X_mat(j+1, i+1)**2 + Y_mat(j+1, i+1)**2)
           if (mask(i,j) <0.99) then
+!          if (i < 2 .or. j<2 .or. imx-i<2 .or. jmx-j<2) then
              v(1)=c2_over_vA2(i,j)*(-2.0/Hx2-2.0/Hy2)
-             PetscCall(MatSetValuesStencil(B,i1,row,i1,row,v,INSERT_VALUES,ierr))
+!             write(*,*) v(1)
+             PetscCall(MatSetValuesStencil(BB,i1,row,i1,row,v(1),INSERT_VALUES,ierr))
           else
              if (j > 0) then
                  if (j == jmx) then
@@ -1484,6 +2088,13 @@ end subroutine field
              col(MatStencil_i, 3) = i
              col(MatStencil_j, 3) = j
 
+ !            write(*,*)v(3), xn0e(i,j)*mu0*e/t0e(i,j)
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Boltzmann e!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!            
+             if(iBoltzmann/=0) then
+                v(3)=v(3)-xn0e(i,j)*mu0*e*e/t0e(i,j)
+             end if
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!             
+
              if (i < imx) then
                  if (i == 0) then
                     v(4) =  c2_over_vA2(i,j)/Hx2+1.0/(2.0*Hx2)*( c2_over_vA2(i+1,j)- c2_over_vA2(i,j))
@@ -1503,7 +2114,10 @@ end subroutine field
              end if
              col(MatStencil_i, 5) = i
              col(MatStencil_j, 5) = j + 1
- 
+
+
+             
+                
 
 !             v(1) = eps(i+1,j+1)/Hy2
 !             col(MatStencil_i, 1) = i
@@ -1520,7 +2134,7 @@ end subroutine field
 !             v(5) = eps(i+1,j+1)/Hy2
 !             col(MatStencil_i, 5) = i
 !             col(MatStencil_j, 5) = j + 1
-             PetscCall(MatSetValuesStencil(B, i1, row, i5, col, v, INSERT_VALUES, ierr))
+             PetscCall(MatSetValuesStencil(BB, i1, row, i5, col, v, INSERT_VALUES, ierr))
           endif
 
 !       enddo
@@ -1528,11 +2142,11 @@ end subroutine field
     
 20       continue
 10    continue
-      PetscCall(MatAssemblyBegin(B,MAT_FINAL_ASSEMBLY,ierr))
-      PetscCall(MatAssemblyEnd(B,MAT_FINAL_ASSEMBLY,ierr))
-      if (A .ne. B) then
-         PetscCall(MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY,ierr))
-         PetscCall(MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY,ierr))
+      PetscCall(MatAssemblyBegin(BB,MAT_FINAL_ASSEMBLY,ierr))
+      PetscCall(MatAssemblyEnd(BB,MAT_FINAL_ASSEMBLY,ierr))
+      if (AA .ne. BB) then
+         PetscCall(MatAssemblyBegin(AA,MAT_FINAL_ASSEMBLY,ierr))
+         PetscCall(MatAssemblyEnd(AA,MAT_FINAL_ASSEMBLY,ierr))
       endif
 !      PetscCall(MatView(A,PETSC_VIEWER_STDOUT_WORLD,petsc_ierr))
 !      PetscCall(MatView(B,PETSC_VIEWER_STDOUT_WORLD,petsc_ierr))
@@ -1542,44 +2156,337 @@ end subroutine field
     !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCc
 
 
-       subroutine ComputeRHS(ksp,b,k,ierr)
+       subroutine ComputeRHS(ksp,bbb,k,ierr)
        use petscksp
        use gem_com
        use equil
        implicit none
-       integer::k,ii,jj
+       integer::k,ii,jj,iflag
+       real,dimension(0:imx,0:jmx)::tbbb
+
+!       tbbb=0
+
        PetscErrorCode  ierr
+       PetscScalar, POINTER ::b_array(:)
+
        KSP ksp
-       Vec b
+       Vec bbb
 !       integer dummy(*)
        PetscScalar  h,Hx,Hy
-       PetscInt  mx,my,i,j
+       PetscInt  mx,my,i,j,xs,xm,ys,ym,vec_start,vec_end
        DM dm
        PetscInt idx
        PetscScalar tmp_value,a_value,tmp_r
 
+ !      MatStencil   row(4)
+       tmp_value=0
+
+  
        PetscCall(KSPGetDM(ksp,dm,ierr))
        PetscCall(DMDAGetInfo(dm,PETSC_NULL_INTEGER,mx,my,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,ierr))
+       PetscCallA(VecGetOwnershipRange(bbb,vec_start,vec_end,ierr))
+       PetscCall(DMDAGetCorners(dm,xs,ys,PETSC_NULL_INTEGER,xm,ym,PETSC_NULL_INTEGER,ierr))
 
 !       Hx = Lx / real(mx-1)
 !       Hy = Ly / real(my-1)
       ! h = Hx*Hy
       ! print *, 'h=',h
-!       a_value = 0.5
-       do i = 0,mx 
-          do j = 0,my
-             ii=i
-             jj=j
-             idx = j*(imx+1)+i
+       !       a_value = 0.5
+       !write(*,*) 'petsccolor=',petsc_color,'petsc_rank=',petsc_rank,'xs=',xs,'xm=',xm,'ys=',ys,'ym=',ym
+!       write(*,*) 'petsccolor=',petsc_color,'petsc_rank=',petsc_rank,'vec_start',vec_start,'vec_end',vec_end!'ys=',ys,'ym=',ym
+       ! write(*,*)'rk=',k
+
+
+    idx=vec_start-1
+!    if(i3D==0)then
+ !      do 10,j = 0,my -1
+       !         do 20,i = 0,mx -1
+       do 10,j=ys,ys+ym-1
+         do 20, i=xs,xs+xm-1
+!             ii=i
+!             jj=j
+!         do idx=vec_start,vec_end-1
+!             i=mod(idx,(imx+1))
+!             j=(idx)/(imx+1)
+                
+!             idx = j*(imx+1)+i
+!             row(MatStencil_i) = i
+!             row(MatStencil_j) = j
+!            idx = i*(jmx+1)+j
+!             idx = (j-ys)*(xm)+(i-xs)
+
+!            idx = j
+            idx=idx+1           
+ !           if(mask(i,j)==1)write(*,*)'mask=', mask(i,j)
+
  !            tmp_r = sqrt(X_mat(j+1, i+1)**2 + Y_mat(j+1, i+1)**2)
              if (mask(i,j) <0.99) then
                 tmp_value = 0
              else
-                 tmp_value = -dene(ii,jj,k)
-             end if    
-             PetscCall(VecSetValues(b, 1, idx, tmp_value, INSERT_VALUES, ierr))
-          end do
-       end do
-       !PetscCall(VecView(b,PETSC_VIEWER_STDOUT_WORLD,petsc_ierr))
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!2D ni noly now!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                if(i3D==0)then
+                   if (iBoltzmann==0) then
+                      tmp_value = denes(i,j,k)-q(1)*mu0*(den2d2(i,j)-xn0i(i,j))
+                   else
+                      tmp_value = -q(1)*mu0*(den2d2(i,j)-xn0i(i,j))
+                   end if
+                
+                   !                 tmp_value = 1
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!3D case!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                else
+                   tmp_value = denes(i,j,k)-q(1)*mu0*(den(2,i,j,k)-xn0i(i,j))
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!       
+                endif
+                
+             end if
+              !             if(k==16) write(*,*)tmp_value
+!              tmp_value=0
+!              if(i==220 .and. j==230)  then
+!                 tmp_value = 1
+!                 write(*,*) 'idx=',idx!, 'row=',row
+!              end if
+!              tmp_value=idx           
+              
+!             tbbb(i,j)=tmp_value
+             PetscCall(VecSetValues(bbb,1,idx, tmp_value, INSERT_VALUES, ierr))
+!          end do
+!       end do
+       
+20       continue
+10    continue
+!          end do
+          
+          
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!3D case!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!       else
+!                tmp_value = denes(i,j,k)-q(1)*mu0*(den(2,i,j,k)-xn0i(i,j))
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!       
+!       endif
+          
+!           PetscCall(VecView(bbb,PETSC_VIEWER_STDOUT_WORLD,ierr))
+        
+             PetscCall(VecAssemblyBegin(bbb,ierr))
+             PetscCall(VecAssemblyEnd(bbb,ierr))
+
+!          if(myID==0) then
+!             PetscCall(VecView(bbb,PETSC_VIEWER_STDOUT_WORLD,ierr))
+
+             !          end if
+!             PetscCall(VecGetArrayReadF90(bbb, b_array, ierr))
+!             if(petsc_rank==0) then
+!              open(unit=11, file = 'testbbb',status='unknown',action='write')
+!               do idx=1,(imx+1)*(jmx+1)
+!              do idx=1,vec_end-vec_start
+
+!                  write(11,*) b_array(idx)
+!               enddo
+!               close(11)
+!               open(unit=111, file = 'testrho',status='unknown',action='write')
+!               write(111,*) tbbb
+!               close(111)
+
+ !           end if
+            
+!              if(petsc_rank==1) then
+!              open(unit=12, file = 'testbbb1',status='unknown',action='write')
+!               do idx=1,(imx+1)*(jmx+1)
+!               do idx=1,vec_end-vec_start
+!                  write(12,*) b_array(idx)
+!               enddo
+!               close(12)
+!               open(unit=12, file = 'testrho2',status='unknown',action='write')
+!               write(12,*) tbbb
+!               close(12)
+!             end if
+!             PetscCall(VecRestoreArrayReadF90(bbb,b_array,ierr))
+
+          
        
        end subroutine
+
+
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+       subroutine smooth(matrix,mk)
+       use gem_com
+       use equil
+
+       IMPLICIT NONE
+       real,dimension(0:imx,0:jmx,0:kmx)::matrix,temp
+       integer::i,j,k,mk
+
+       if(mk==3)then
+       do k=0,kmx
+          do i=2,imx-2
+             do j=2,jmx-2
+                if(mask3(i,j)<2.99)then
+                else
+                   temp(i,j,k)=(matrix(i,j,k)+matrix(i+1,j,k)+matrix(i,j+1,k)+matrix(i-1,j,k)+matrix(i,j-1,k))*0.2
+                endif
+                end do
+          end do
+       end do
+     elseif(mk==2)then
+       do k=0,kmx
+          do i=2,imx-2
+             do j=2,jmx-2
+                if(mask2(i,j)<1.99)then
+                else
+                   temp(i,j,k)=(matrix(i,j,k)+matrix(i+1,j,k)+matrix(i,j+1,k)+matrix(i-1,j,k)+matrix(i,j-1,k))*0.2
+                endif
+                end do
+          end do
+       end do
+    end if
+    
+       matrix=temp
+     end subroutine smooth
+     
+     !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+     subroutine integ(iflag)
+       
+       use gem_com
+       use equil
+
+       IMPLICIT NONE
+       integer::i,j,k,ip,m,iflag,itemp
+       real::wx0,wx1,wzeta0,wzeta1,wy0,wy1,x,z,zeta,R_major_over_R,R_major_over_R1, ave_den,avex
+
+       start_integ_tm = MPI_WTIME()
+!       write(*,*)iflag
+       itemp=2
+!       iflag=2
+!       write(*,*)'after set iflag'
+       den(iflag,:,:,:)=0
+       upar=0
+       !$acc parallel loop gang vector
+       do m=1,mm(1)
+
+         x=x3(m)
+         i = int(x/dxeq)
+!         i = min(i,nx-1)
+         wx0 = (i+1)-x/dxeq
+         wx1 = 1.-wx0
+
+         R_major_over_R=xctr/(xctr-xdim/2+i*dx)
+         R_major_over_R1=xctr/(xctr-xdim/2+(i+1)*dx)
+
+!         if (m==55)  write(*,*) dxeq-dx, wx0,wx1
+         z = z3(m)
+         j = int(z/dzeq)
+!         j = min(j,nz-1)
+         wy0 = (j+1)-z/dzeq
+         wy1 = 1.-wy0
+
+         zeta=modulo(zeta3(m),2*pi)
+!         if (zeta<0)zeta=zeta+2*pi
+         k=int(zeta/dzeta)
+         wzeta0=(k+1)-zeta/dzeta
+         wzeta1=1.-wzeta0
+
+!         write(*,*) i,j
+         !$acc atomic update 
+         den(iflag,i,j,k)=den(iflag,i,j,k)+w3(m)*wx0*wy0*wzeta0*R_major_over_R
+         !$acc atomic update
+         den(iflag,i+1,j,k)=den(iflag,i+1,j,k)+w3(m)*wx1*wy0*wzeta0*R_major_over_R1
+         !$acc atomic update
+         den(iflag,i,j+1,k)=den(iflag,i,j+1,k)+w3(m)*wx0*wy1*wzeta0*R_major_over_R
+         !$acc atomic update
+         den(iflag,i+1,j+1,k)=den(iflag,i+1,j+1,k)+w3(m)*wx1*wy1*wzeta0*R_major_over_R1
+         !$acc atomic update 
+         upar(i,j,k)=upar(i,j,k)+u3(m)*w3(m)*wx0*wy0*wzeta0*R_major_over_R
+         !$acc atomic update
+         upar(i+1,j,k)=upar(i+1,j,k)+u3(m)*w3(m)*wx1*wy0*wzeta0*R_major_over_R1
+         !$acc atomic update
+         upar(i,j+1,k)=upar(i,j+1,k)+u3(m)*w3(m)*wx0*wy1*wzeta0*R_major_over_R
+         !$acc atomic update
+         upar(i+1,j+1,k)=upar(i+1,j+1,k)+u3(m)*w3(m)*wx1*wy1*wzeta0*R_major_over_R1
+         
+         if(k/=kmx)then
+            !$acc atomic update
+            den(iflag,i,j,k+1)=den(iflag,i,j,k+1)+w3(m)*wx0*wy0*wzeta1*R_major_over_R
+            !$acc atomic update
+            den(iflag,i+1,j,k+1)=den(iflag,i+1,j,k+1)+w3(m)*wx1*wy0*wzeta1*R_major_over_R1
+            !$acc atomic update
+            den(iflag,i,j+1,k+1)=den(iflag,i,j+1,k+1)+w3(m)*wx0*wy1*wzeta1*R_major_over_R
+            !$acc atomic update
+            den(iflag,i+1,j+1,k+1)=den(iflag,i+1,j+1,k+1)+w3(m)*wx1*wy1*wzeta1*R_major_over_R1
+            !$acc atomic update
+            upar(i,j,k+1)=upar(i,j,k+1)+u3(m)*w3(m)*wx0*wy0*wzeta1*R_major_over_R
+            !$acc atomic update
+            upar(i+1,j,k+1)=upar(i+1,j,k+1)+u3(m)*w3(m)*wx1*wy0*wzeta1*R_major_over_R1
+            !$acc atomic update
+            upar(i,j+1,k+1)=upar(i,j+1,k+1)+u3(m)*w3(m)*wx0*wy1*wzeta1*R_major_over_R
+            !$acc atomic update
+            upar(i+1,j+1,k+1)=upar(i+1,j+1,k+1)+u3(m)*w3(m)*wx1*wy1*wzeta1*R_major_over_R1
+            
+         else
+            !$acc atomic update
+            den(iflag,i,j,0)=den(iflag,i,j,0)+w3(m)*wx0*wy0*wzeta1*R_major_over_R
+            !$acc atomic update
+            den(iflag,i+1,j,0)=den(iflag,i+1,j,0)+w3(m)*wx1*wy0*wzeta1*R_major_over_R1
+            !$acc atomic update
+            den(iflag,i,j+1,0)=den(iflag,i,j+1,0)+w3(m)*wx0*wy1*wzeta1*R_major_over_R
+            !$acc atomic update
+            den(iflag,i+1,j+1,0)=den(iflag,i+1,j+1,0)+w3(m)*wx1*wy1*wzeta1*R_major_over_R1
+            !$acc atomic update
+            upar(i,j,0)=upar(i,j,0)+u3(m)*w3(m)*wx0*wy0*wzeta1*R_major_over_R
+            !$acc atomic update
+            upar(i+1,j,0)=upar(i+1,j,0)+u3(m)*w3(m)*wx1*wy0*wzeta1*R_major_over_R1
+            !$acc atomic update
+            upar(i,j+1,0)=upar(i,j+1,0)+u3(m)*w3(m)*wx0*wy1*wzeta1*R_major_over_R
+            !$acc atomic update
+            upar(i+1,j+1,0)=upar(i+1,j+1,0)+u3(m)*w3(m)*wx1*wy1*wzeta1*R_major_over_R1
+
+         end if
+      end do
+!!         !$acc wait
+
+!      write(*,*) w3(1), den(2,i,j,k),x,z,zeta
+      call MPI_Allreduce(MPI_IN_PLACE, den(iflag,:,:,:), (imx+1)*(jmx+1)*(kmx+1),MPI_Real8, MPI_SUM, MPI_COMM_WORLD,ierr)
+      call MPI_Allreduce(MPI_IN_PLACE, upar(:,:,:), (imx+1)*(jmx+1)*(kmx+1),MPI_Real8, MPI_SUM, MPI_COMM_WORLD,ierr)
+
+
+      
+         den2d2=0
+         do k=0,kmx
+            den2d2=den2d2+den(iflag,:,:,k)
+            if (i3D==0 .and. k /= 0) upar(:,:,0)=upar(:,:,0)+upar(:,:,k)
+         end do
+         
+         den2d2=den2d2/(kmx+1)
+         if(i3D==0)then
+            upar(:,:,0)=upar(:,:,0)/(kmx+1)
+            do k=1,kmx
+               upar(:,:,k)=upar(:,:,0)
+            end do
+         end if
+         
+         if(iflag==2)then
+!             ave_den=0
+!             avex=0
+!             do i=0,imx
+!                do j=0,jmx
+!                   ave_den=ave_den+den2d2(i,j)
+                  ! avex=avex+x3(j)
+!                end do
+!             end do
+
+             
+!             ave_den=ave_den/(imx-1)/(jmx-1)
+!             write(*,*)ave_den! 'avex', avex/mmx
+             dden2d=den2d2-den2d1
+             den2d1=den2d2
+ !        den_pre=den(2,:,:,:)
+          end if
+          
+     end_integ_tm = MPI_WTIME()
+     integ_tm = integ_tm + end_integ_tm - start_integ_tm 
+
+    end subroutine integ
+    
+           
+       

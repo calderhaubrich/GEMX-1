@@ -4,11 +4,14 @@ OBJS =	gem_com.o equil.o gem.o ionPush.o outd.o fcnt.o
 
 PLIB = pputil.o
 
-F90 = ftn
+F90 = mpif90
 
 #OPT = -f free -O0 -s real64 -eD -hlist=a -llapack # -lblas -cpp # -Minfo=accel -acc -mp
 #OPT = -f free -O3 -s real64  -hlist=a -llapack # -lblas -cpp # -Minfo=accel -acc -mp
-OPT = -Mbounds -Mfree -r8 -Minfo -llapack -lblas -I/global/cfs/cdirs/mp118/software/petsc/install/include -L/global/cfs/cdirs/mp118/software/petsc/install/lib -lpetsc
+
+#OPT = -acc -Mbounds -Mfree -r8 -Minfo=accel -llapack -lblas -I/opt/petsc/linux-nv/include -L/opt/petsc/linux-nv/lib -lpetsc
+OPT = -acc -Mbounds -Mfree -r8 -Minfo=accel -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include -L${PETSC_DIR}/${PETSC_ARCH}/lib -lpetsc
+#OPT = -Mbounds -Mfree -r8 -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include -L${PETSC_DIR}/${PETSC_ARCH}/lib -lpetsc
 
 LDFLAGS = 
 
@@ -39,5 +42,5 @@ fcnt.o: fcnt.F90
 	$(F90) -c $(OPT) fcnt.F90
 
 clean:
-	rm -f *.o *.lst *.mod gem out/* dump/* xpp matrix/*  testne testphi psi_test run.out flag_debug debug.dat
+	rm -f *.o *.lst *.mod gem out/* dump/* xpp matrix/*  testne testphi psi_test run.out flag_debug debug.dat test* mask*
 

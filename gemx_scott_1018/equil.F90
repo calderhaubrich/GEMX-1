@@ -2,13 +2,14 @@ MODULE equil
       IMPLICIT NONE
       real :: mimp=2,chgi=1
       real :: beta,rmaj0,a,q0,r0,q0p,q0abs,shat0
-      real :: dR,dth
-      integer :: nr=200,nr2=100,ntheta=200,isgnf=1,isgnq=-1,isupae0=0
-      real :: psi_max=0.32, psi_min=-1.0,R_min=1.0, Z_min=-1.5, Z_internal=-1.2, psi_div=0.305
+      real :: dR,dth,mu0,e,proton
+      integer :: nr=200,nr2=100,ntheta=200,isgnf=1,isgnq=-1,isupae0=0,tor_n
+      real :: psi_max=0.31, psi_min=-0.1 ,R_min=1.0, Z_min=-1.5, Z_internal=-1.2, psi_div=0.305,psi_a=0.311647
 
 !     GEM-X
       integer :: nx=449,nz=433,nzeta=32
       real :: xdim,zdim,xctr,zctr,dxeq,dzeq
+      
       real,dimension(:,:),allocatable :: b0,b0x,b0z,b0zeta,dbdx,dbdz,c2_over_vA2
       real,dimension(:,:),allocatable :: t0i,t0e,xn0i,xn0e,captix,captex,capnix,capnex,captiz,captez,capniz,capnez
       
@@ -16,7 +17,7 @@ MODULE equil
                                       vpari,vparip, &
                                       zeff,nue0,phinc,phincp,&
                                       er,upari, Rgrid, Zgrid
-      real,dimension(:,:),allocatable :: t0s,xn0s,capts,capns,vpars,vparsp,psi_p,mask
+      real,dimension(:,:),allocatable :: t0s,xn0s,capts,capns,vpars,vparsp,psi_p,mask,mask2,mask3,mask4
       real:: bu,tu,nu,xu,frequ,vu,eru
 
 !     for including bstar effects
@@ -25,6 +26,8 @@ MODULE equil
 
 !     for equilibrium current                                                                                                                                         
       real(8),dimension(:,:),allocatable :: upae0,nuob,dnuobdr,dnuobdt
+
+      real,dimension(:,:,:),allocatable ::curlb
       
 
 contains
@@ -35,7 +38,7 @@ contains
 
       integer :: i,j,k,m,i1,j1,j2
       real(8) :: dum,x
-      real(8) :: e,proton,omegau
+      real(8) :: omegau          !,e,proton
  
 !     global equilibrium data
 
@@ -58,13 +61,20 @@ contains
                capnix(0:nx,0:nz),capnex(0:nx,0:nz),captix(0:nx,0:nz),captex(0:nx,0:nz), &
                capniz(0:nx,0:nz),capnez(0:nx,0:nz),captiz(0:nx,0:nz),captez(0:nx,0:nz))      
 
-               allocate(Rgrid(0:nx),Zgrid(0:nz))
-               allocate(psi_p(0:nx,0:nz),mask(0:nx,0:nz),c2_over_vA2(0:nx,0:nz))
+      allocate(curlb(0:nx,0:nz,3))
+      
+      allocate(Rgrid(0:nx),Zgrid(0:nz),bdcrvb(0:nx,0:nz))
+      allocate(psi_p(0:nx,0:nz),mask(0:nx,0:nz),c2_over_vA2(0:nx,0:nz),mask2(0:nx,0:nz),mask3(0:nx,0:nz),mask4(0:nx,0:nz))
 
+ 
+      
+                  
+               
       open(unit=10, file = 'R.dat',status='old',action='read')
 	read(10,*) Rgrid
       close(10)    
 
+      
        open(unit=10, file = 'Z.dat',status='old',action='read')
 	read(10,*) Zgrid
         close(10)
@@ -75,11 +85,11 @@ contains
         
 
 
-        open(unit=11, file = 'psi_test',status='unknown',action='write')
+!        open(unit=11, file = 'psi_test',status='unknown',action='write')
  !     do i=0,nx
-         write(11,*) psi_p
+!         write(11,*) psi_p
  !     end do
-      close(11)     
+ !     close(11)     
       
             
         
@@ -93,6 +103,7 @@ contains
 	read(10,*) b0x
       close(10)    
 
+      
 !      open(unit=11, file = 'debug.dat',status='unknown',action='write')
 !      write(11,*) b0x(5,0), 'dR='dR
 !      close(11)
@@ -105,50 +116,159 @@ contains
 	read(10,*) b0zeta
       close(10)
 
-
+!      B0x=0
+!      B0z=0
       
-      do i =0,nx-1
-            do j =0,nz-1
+      do i =0,nx
+            do j =0,nz
 		b0(i,j) = sqrt(b0x(i,j)**2+b0z(i,j)**2+b0zeta(i,j)**2)
     	end do
       end do 
 
 
 
-          do i=0,nx
-           do j=0,nz
-              c2_over_vA2(i,j)=2*Rgrid(i)**2/(Rgrid(0)+Rgrid(nx))**2
-!              if (psi_p(i,j)<psi_max .and.psi_p(i,j)>psi_min .and. (Zgrid(j)>Z_internal .or. (Zgrid(j)>Z_min .and. psi_p(i,j)>psi_div)) .and. Rgrid(i)>R_min)  then
-              if (psi_p(i,j) < 0.3.and.Zgrid(j)>-1.08) then
-                  mask(i,j)=1
-              else
-                  mask(i,j)=0
-              endif
-        end do
-     end do
-     open(unit=11, file = './out/mask.dat',status='unknown',action='write')
- !     do i=0,nx
-         write(11,*) mask
- !     end do
-      close(11)     
 
-!     Normalization
       e = 1.6e-19
+      mu0 = 1.25663706212e-6
       proton = 1.67e-27
       Bu = 1.98562
+
+      Bu = 1
+      
       Tu = 1000*e
       omegau = e*Bu/proton
       frequ = omegau
 
       vu = sqrt(Tu/proton)
+      vu=1
       xu = proton*vu/(e*Bu)
+      xu=1
       nu = 2.5e19
-      beta = 4*3.14159*1e-7*nu*Tu/Bu**2 
+      beta = 4*3.14159*1e-7*nu*Tu/Bu**2
 
-      b0 = b0/bu
-      b0x = b0x/bu
-      b0z = b0z/bu
-      b0zeta = b0zeta/bu
+
+      !     assign T, n profiles 
+      do i = 0,nx
+         do j = 0,nz
+            t0i(i,j) = 1.*Tu
+            t0e(i,j) = 1.*Tu
+            xn0i(i,j) = 1.*nu
+            xn0e(i,j) = 1.*nu
+         end do
+      end do
+
+
+      open(unit=10, file = 'ne0.dat',status='old',action='read')
+	read(10,*) xn0e
+      close(10)
+ 
+
+      open(unit=10, file = 'ti0.dat',status='old',action='read')
+	read(10,*) t0i
+      close(10)
+
+      xn0e=xn0e*nu
+      t0i=t0i*Tu
+      xn0i=xn0e
+
+
+      do i=0,nx
+         do j=0,nz
+            if (xn0e(i,j)<1e-9) then
+               c2_over_vA2(i,j)=mu0*2*proton*0.01*xn0e(nx/2,nz/2)/(b0(i,j)**2)*vu**2
+            else
+               c2_over_vA2(i,j)=mu0*2*proton*xn0e(i,j)/(b0(i,j)**2)*vu**2!2*Rgrid(i)**2/(Rgrid(0)+Rgrid(nx))**2
+            end if
+            
+           ! if (c2_over_vA2(i,j)<1.0e-19) c2_over_vA2(i,j)=0.01*mu0*2*proton*xn0e(i/2,j/2)/(b0(i/2,j/2)**2)*vu**2
+         end do
+      end do
+      
+            
+      mask=0
+!      c2_over_vA2=1
+          do i=2,nx-2
+           do j=2,nz-2
+             ! c2_over_vA2(i,j)=mu0*2*proton*xn0e(i,j)/(b0(i,j)**2)*vu**2!2*Rgrid(i)**2/(Rgrid(0)+Rgrid(nx))**2
+!              write(*,*) c2_over_vA2(i,j)
+              if (psi_p(i,j)<psi_max .and.psi_p(i,j)>psi_min .and. (Zgrid(j)>Z_internal .or. (Zgrid(j)>Z_min .and. psi_p(i,j)>psi_div)) .and. Rgrid(i)>R_min)  then
+!             if(psi_p(i,j)<0.3 .and. Zgrid(j)>-1.08) then
+              mask(i,j)=1
+           else
+              mask(i,j)=0
+           endif
+        end do
+     end do
+
+     do i=2,nx-2
+        do j=2,nz-2
+             if(mask(i+1,j)*mask(i-1,j)*mask(i,j+1)*mask(i,j-1)==0) then
+                mask2(i,j)=0
+             else
+              mask2(i,j)=2
+           endif
+        end do
+     end do
+
+     do i=2,nx-2
+        do j=2,nz-2
+             if(mask2(i+1,j)*mask2(i-1,j)*mask2(i,j+1)*mask2(i,j-1)==0) then
+                mask3(i,j)=0
+             else
+              mask3(i,j)=3
+           endif
+        end do
+     end do
+
+     do i=2,nx-2
+        do j=2,nz-2
+             if(mask3(i+1,j)*mask3(i-1,j)*mask3(i,j+1)*mask3(i,j-1)==0) then
+                mask4(i,j)=0
+             else
+              mask4(i,j)=4
+           endif
+        end do
+     end do
+
+
+
+  if(myid==0)then
+    open(unit=11, file = 'test_1_over_vA2',status='unknown',action='write')
+      do j=0,nz
+         write(11,*) c2_over_vA2(:,j)
+      end do
+      close(11)
+     open(unit=11, file = 'mask',status='unknown',action='write')
+      do j=0,nz
+         write(11,*) mask(:,j)
+      end do
+      close(11)
+
+      open(unit=11, file = 'mask2',status='unknown',action='write')
+      do j=0,nz
+         write(11,*) mask2(:,j)
+      end do
+      close(11)  
+     open(unit=11, file = 'mask3',status='unknown',action='write')
+      do j=0,nz
+         write(11,*) mask3(:,j)
+      end do
+      close(11)
+      open(unit=11, file = 'mask4',status='unknown',action='write')
+      do j=0,nz
+         write(11,*) mask4(:,j)
+      end do
+      close(11)
+   end if
+   
+!     Normalization
+
+      b0 = b0/Bu
+      b0x = b0x/Bu
+      b0z = b0z/Bu
+      b0zeta = b0zeta/Bu
+
+
       
 !     write(*,*) 'betaU=', beta
 
@@ -169,15 +289,28 @@ contains
       dxeq = xdim/nx
       dzeq = zdim/nz
 
-!     assign T, n profiles 
-      do i = 0,nx
-         do j = 0,nz
-            t0i(i,j) = 1.
-            t0e(i,j) = 1.
-            xn0i(i,j) = 1.
-            xn0e(i,j) = 1.
+
+
+      do i=1,nx-1
+         do j=1,nz-1
+            curlb(i,j,1)=-((-b0zeta(i,j+1)/b0(i,j+1)+b0zeta(i,j-1)/b0(i,j-1))/(2*dzeq))
+            curlb(i,j,2)=-(1/Rgrid(i)*(Rgrid(i+1)*b0zeta(i+1,j)/b0(i+1,j)-Rgrid(i-1)*b0zeta(i-1,j)/b0(i-1,j))/(2*dxeq))
+            curlb(i,j,3)=-((b0x(i,j+1)/b0(i,j+1)-b0x(i,j-1)/b0(i,j-1))/(2*dzeq)-(b0z(i+1,j)/b0(i+1,j)-b0z(i-1,j)/b0(i-1,j))/(2*dxeq))
+!            write(*,*) curlb(i,j,2)+(b0zeta(i,j)/b0(i,j)/Rgrid(i)*xu+(b0zeta(i+1,j)/b0(i+1,j)-b0zeta(i-1,j)/b0(i-1,j))/(2*dxeq))
          end do
       end do
+      
+      
+
+      do i=1,nx-1
+         do j=1,nz-1
+            bdcrvb(i,j)=-1/b0(i,j)*(b0x(i,j)*(-b0zeta(i,j+1)/b0(i,j+1)+b0zeta(i,j-1)/b0(i,j-1))/(2*dzeq)&
+                                              +b0z(i,j)/Rgrid(i)*(Rgrid(i+1)*b0zeta(i+1,j)/b0(i+1,j)-Rgrid(i-1)*b0zeta(i-1,j)/b0(i-1,j))/(2*dxeq)&
+                                              +b0zeta(i,j)*((b0x(i,j+1)/b0(i,j+1)-b0x(i,j-1)/b0(i,j-1))/(2*dzeq)-(b0z(i+1,j)/b0(i+1,j)-b0z(i-1,j)/b0(i-1,j))/(2*dxeq)))
+         end do
+      end do
+      
+      
       
       
 !     Gradients of T and n profiles for global simulation. Flux-tube parameters done at the end

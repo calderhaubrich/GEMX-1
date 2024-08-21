@@ -6,20 +6,24 @@
 	 integer :: i,j,k
          integer m
 
-         write(*,*) "timestep =", timestep
 
+         if (myid==0) then
+            write(*,*) "timestep =", timestep
+!         end if
+      
+      
 !SP      open(935, file='./out/tracer.out',status='unknown',position='append')
 !SP     with no append file is overwritten
       if (n.eq.ncurr) open(935, file='./out/tracer.out',status='unknown')
-      do m=1,mm(1)
-         write(935,*) timestep,m, (x3(m))*xu+Rgrid(0),(z3(m))*xu+Zgrid(0)
+      do m=1,ntracer
+         write(935,*) timestep,m, (x3(m))*xu+Rgrid(0),(z3(m))*xu+Zgrid(0)!,u3(m)
       end do
       if (n.eq.nm)  close(935)
 
 
       open(unit=11, file = './out/testne',status='unknown',action='write')
       do j=0,jmx
-         write(11,*) dene(:,j,k)
+         write(11,*) dene(:,j,0)
       enddo
       close(11)
 
@@ -30,7 +34,7 @@
           write(11,*) phi(:,j,0)  !k is assumed to be 0
        enddo
        close(11)
-!      endif
+      endif
 
 
 

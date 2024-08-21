@@ -16,13 +16,13 @@ INTERFACE
   end function en3
 END INTERFACE
 
-integer :: ntracer,ifield_solver,imx,jmx,kmx,mmx,nmx,nsmx,nsubd=8,&
-                     ntube=4
-
+integer :: imx,jmx,kmx,mmx,nmx,nsmx,nsubd=8,ntube=4,petsc_color,petsc_rank,iBoltzmann,globle_integer=0
+integer,dimension(0:10006):: rand_table
 	 character*70 outname
 	 REAL(8) :: endtm,begtm,pstm
 	 REAL(8) :: starttm,lasttm,tottm
-
+         REAL(8) :: start_total_tm, end_total_tm, start_integ_tm, end_integ_tm, start_ppush_tm, end_ppush_tm, start_cpush_tm, end_cpush_tm
+         REAL(8) :: total_tm = 0.0, integ_tm = 0.0, ppush_tm = 0.0, cpush_tm = 0.0
 !          imx,jmx,kmx = max no. of grid pts in x,y,z
 !          mmx         = max no. of particles
 !          nmx         = max. no. of time steps
@@ -36,7 +36,7 @@ real(8),dimension(:),allocatable :: time
 REAL(8) :: dx,dz,dzeta,pi,pi2,dt,totvol,n0,tcurr
 REAL(8) :: etaohm
 REAL(8) :: lx,lz
-INTEGER :: nm,nsm,ncurr,iflr
+INTEGER :: nm,nsm,ncurr,iflr,ifield_solver,ntracer,i3D,icollision
 REAL(8) :: cut,amp,tor,amie,emass,qel,rneu
 INTEGER :: iput,iget,idg,ision,isham,peritr,iadi
 
@@ -46,7 +46,7 @@ COMPLEX(8) :: IU
 
 REAL(8),DIMENSION(:,:,:,:),allocatable :: den
 REAL(8),DIMENSION(:,:,:),allocatable :: rho
-real(8),dimension(:,:,:),allocatable :: phi
+real(8),dimension(:,:,:),allocatable :: phi!,den_pre,dden
 REAL(8),DIMENSION(:,:,:),allocatable :: ex
 REAL(8),DIMENSION(:,:,:),allocatable :: ez
 REAL(8),DIMENSION(:,:,:),allocatable :: ezeta
@@ -59,7 +59,7 @@ real(8),dimension(:,:,:),allocatable :: phis,denes,apars,upars
 
 real(8),dimension(:,:,:),allocatable :: jpar
 
-real(8),dimension(:,:),allocatable :: bmag,gbtor,gbx,gbz,gnuobx,gnuoby,gupae0
+real(8),dimension(:,:),allocatable :: bmag,gbtor,gbx,gbz,gnuobx,gnuoby,gupae0,xforw,zforw,zbackw,xbackw,den2d1,den2d2,dden2d
 real(8),dimension(:,:,:),allocatable :: dnedx,dnedy,dupadx,dupady
 real(8),dimension(:,:),allocatable :: gn0i,gt0i,gn0e,gt0e,gcptex,gcptez,gcpnex,gcpnez
 
@@ -93,7 +93,7 @@ REAL(8),DIMENSION(:,:),allocatable :: pfl,efl
 integer,parameter :: Master=0
 integer :: numprocs
 INTEGER :: MyId,Last,cnt,ierr
-INTEGER :: GRID_COMM,TUBE_COMM
+INTEGER :: GRID_COMM,TUBE_COMM, PETSC_COMM
 INTEGER :: GCLR,TCLR,GLST,TLST
 INTEGER :: stat(MPI_STATUS_SIZE)
 INTEGER :: lngbr,rngbr,idprv,idnxt
@@ -119,13 +119,13 @@ allocate(time(0:nmx))
       ALLOCATE( den(2,0:imx,0:jmx,0:kmx))
       
 ALLOCATE( rho(0:imx,0:jmx,0:kmx))
-allocate( phi(0:imx,0:jmx,0:kmx))
+allocate( phi(0:imx,0:jmx,0:kmx))!,den_pre(0:imx,0:jmx,0:kmx),dden(0:imx,0:jmx,0:kmx))
 ALLOCATE( ex(0:imx,0:jmx,0:kmx)) 
 ALLOCATE( ez(0:imx,0:jmx,0:kmx)) 
 ALLOCATE( ezeta(0:imx,0:jmx,0:kmx))
 
 ALLOCATE( delbx(0:imx,0:jmx,0:kmx),delbz(0:imx,0:jmx,0:kmx),delby(0:imx,0:jmx,0:kmx))
-ALLOCATE( xg(0:imx),zg(0:jmx))
+ALLOCATE( xg(0:imx),zg(0:jmx),den2d1(0:imx,0:jmx),den2d2(0:imx,0:jmx),dden2d(0:imx,0:jmx))
 allocate( apar(0:imx,0:jmx,0:kmx),dene(0:imx,0:jmx,0:kmx))
 
 allocate( upar(0:imx,0:jmx,0:kmx),jpar(0:imx,0:jmx,0:kmx))
@@ -136,7 +136,7 @@ allocate( jac(0:imx))
 allocate( bmag(0:imx,0:jmx),gbtor(0:imx,0:jmx),gbx(0:imx,0:jmx),gbz(0:imx,0:jmx))
 allocate( dnedx(0:imx,0:jmx,0:kmx),dnedy(0:imx,0:jmx,0:kmx), &
           dupadx(0:imx,0:jmx,0:kmx),dupady(0:imx,0:jmx,0:kmx))
-allocate(gn0i(0:imx,0:jmx),gn0e(0:imx,0:jmx),gt0i(0:imx,0:jmx),gt0e(0:imx,0:jmx))
+allocate(gn0i(0:imx,0:jmx),gn0e(0:imx,0:jmx),gt0i(0:imx,0:jmx),gt0e(0:imx,0:jmx),xforw(0:imx,0:jmx),zforw(0:imx,0:jmx),zbackw(0:imx,0:jmx),xbackw(0:imx,0:jmx))
 allocate(gcpnex(0:imx,0:jmx),gcpnez(0:imx,0:jmx),gcptex(0:imx,0:jmx),gcptez(0:imx,0:jmx))          
 allocate(gnuobx(0:imx,0:jmx),gnuoby(0:imx,0:jmx),gupae0(0:imx,0:jmx)) 
 allocate(ileft(0:imx,0:jmx),jleft(0:imx,0:jmx),iright(0:imx,0:jmx),jright(0:imx,0:jmx))

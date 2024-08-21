@@ -1,11 +1,37 @@
-#!/bin/bash
-#SBATCH -A mp118
-#SBATCH -C cpu
-#SBATCH --qos=debug
-#SBATCH --time=30
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=32
-#SBATCH -J na
+#!/bin/bash -l
 
-srun -n 32 --cpu-bind=cores -c 8 ./gem >& run.out
+#SBATCH -q regular
+#SBATCH -N 1
+#SBATCH --ntasks-per-node=16
+#SBATCH -c 8
+#SBATCH -t 24:00:00
+#SBATCH -J gpu_n1
+#SBATCH -C gpu
+#SBATCH --gres=gpu:4
+#SBATCH -e run.err
+#SBATCH -o run.out
+#SBATCH --gpu-bind=map_gpu:0,1,2,3
+#SBATCH -A mp118_g
 
+cd $SLURM_SUBMIT_DIR
+mkdir -p matrix
+mkdir -p out
+mkdir -p dump
+
+export OMP_PROC_BIND=spread
+export OMP_PLACES=threads
+export OMP_NUM_THREADS=8
+#if [ $SLURM_LOCALID -eq 0 ]; then 
+#CUDA_VISIBLE_DEVICES=$SLURM_JOB_GPUS nvidia-cuda-mps-control -d 
+#fi
+#nvidia-cuda-mps-control -d
+#export CUDA_VISIBLE_DEVICES=$(( SLURM_LOCALID % 4 ))
+#cd $SLURM_SUBMIT_DIR
+
+#srun --cpu-bind=cores ./gem_main >& run.out
+
+source env.sh
+export SLURM_CPU_BIND="cores"
+srun ./gem
+#srun nsys profile -s process-tree -o output ./gem
+#srun ./select_gpu_device.sh nsys profile -s process-tree -o output ./gem_main

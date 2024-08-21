@@ -1,3 +1,6 @@
 **/*.mod
 **/*.o
-gemx_scott_1018/gem
+**/gemx
+src/out
+src/dump
+src/matrix

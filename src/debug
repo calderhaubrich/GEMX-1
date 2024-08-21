@@ -31,6 +31,6 @@ export OMP_NUM_THREADS=8
 #srun --cpu-bind=cores ./gem_main >& run.out
 
 export SLURM_CPU_BIND="cores"
-srun ./gem
+srun ./gemx
 #srun nsys profile -s process-tree -o output ./gem
 #srun ./select_gpu_device.sh nsys profile -s process-tree -o output ./gem_main

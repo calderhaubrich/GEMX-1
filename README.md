@@ -3,7 +3,7 @@ Gyrokinetic simulation of the tokamak edge including the scrape-off layer
 
 Please add any useful notes to this file. Place it anywhere and we can clean up later.
 
-GEM_X-3.pdf is our equations or user manual.  Consider placing any notes on implementations in this overleaf document: https://www.overleaf.com/project/64456a5749a720661d4d1f0a
+GEMX.pdf is our equations or user manual.  Consider placing any notes on implementations in this overleaf document: https://www.overleaf.com/project/64456a5749a720661d4d1f0a
 
 Versions:
 

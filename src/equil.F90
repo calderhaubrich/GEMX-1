@@ -32,7 +32,7 @@ MODULE equil
 
 contains
       subroutine new_equil()
-      use gem_com,only: myid
+      use gemx_com,only: myid
       implicit none
       real(8) :: pi,pi2,r,th,s
 

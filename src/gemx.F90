@@ -1,6 +1,6 @@
       program gemx
 #include <petsc/finclude/petscksp.h>
-      use gem_com
+      use gemx_com
       use equil
 
       use petsc
@@ -8,7 +8,7 @@
       use petscksp
 !      use para_com
 
-!      use gem_com
+!      use gemx_com
 !      use equil
       implicit none
 
@@ -542,7 +542,7 @@ total_tm = total_tm + end_total_tm - start_total_tm
 
       subroutine init
       
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       character*(62) dumchar
@@ -557,7 +557,7 @@ total_tm = total_tm + end_total_tm - start_total_tm
       pi=4.0*atan(1.0)
       pi2 = pi*2.
 
-      open(115,file='gem.in')
+      open(115,file='gemx.in')
       read(115,*) dumchar
       read(115,*) imx,jmx,kmx,mmx,nmx,nsmx,ntube
       read(115,*) dumchar
@@ -582,7 +582,7 @@ total_tm = total_tm + end_total_tm - start_total_tm
       
       nsm=1
       
-      call new_gem_com()
+      call new_gemx_com()
       ns = 1
       tmm(ns)=mmx!ntracer
 !      mm(ns)=int(ntracer/numprocs)
@@ -708,7 +708,7 @@ total_tm = total_tm + end_total_tm - start_total_tm
   
 !  currently set up for periodic in x,y,z
 
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       INTEGER :: i,j,k,ip
@@ -751,7 +751,7 @@ total_tm = total_tm + end_total_tm - start_total_tm
 !    source quantities are are calculated: n_i
 !    right now only ion quantitities are calculated...
 
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       REAL(8) :: x,z
@@ -897,7 +897,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
 !---------------------------------------------------------------------- 
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine gkps()
-      use gem_com
+      use gemx_com
       use equil
       use petsc
       use petscdmda
@@ -910,7 +910,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       subroutine get_apar(flagnumber)
-         use gem_com
+         use gemx_com
          use equil
 
          IMPLICIT NONE
@@ -994,7 +994,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
 
 
       subroutine get_jpar(matrix)
-         use gem_com
+         use gemx_com
          use equil
          IMPLICIT NONE
          real, dimension(0:imx,0:jmx,0:kmx):: matrix
@@ -1021,7 +1021,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
 
  !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
          subroutine get_ne(flagnumber)
-            use gem_com
+            use gemx_com
             use equil
 
             IMPLICIT NONE
@@ -1132,7 +1132,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
 
 
       subroutine eqmo(ip)
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       integer :: i,j,k,ip
@@ -1146,7 +1146,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       subroutine spec(n)
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       integer :: i,j,k,l,m,n
@@ -1157,7 +1157,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine ezamp
 
-      use gem_com
+      use gemx_com
       use equil
 
       implicit none
@@ -1226,7 +1226,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine loadi
 
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       INTEGER :: i,j,k,m,idum,ns,m1
@@ -1339,7 +1339,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
       end
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine gradu(u,ux,uz)
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       real(8) :: u(0:imx,0:jmx,0:1)
@@ -1379,7 +1379,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
     
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine gradz(u,uz)
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       real(8) :: u(0:imx,0:jmx,0:kmx)
@@ -1430,7 +1430,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
       
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine initialize
-         use gem_com
+         use gemx_com
       use equil
 
 	implicit none
@@ -1474,7 +1474,7 @@ if(idg.eq.1)write(*,*)myid,'pass ion grid1'
 	end
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine accumulate(n,ip)
-         use gem_com
+         use gemx_com
          use equil
 	implicit none
 
@@ -1485,7 +1485,7 @@ subroutine accumulate(n,ip)
 end subroutine accumulate
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine field(n,ip)
-         use gem_com
+         use gemx_com
          use equil
 	implicit none
         integer :: n,i,j,k,ip,i1
@@ -1504,7 +1504,7 @@ end subroutine field
 
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine pintef
-      use gem_com
+      use gemx_com
       use equil
       implicit none
 
@@ -1543,7 +1543,7 @@ end subroutine field
 
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine cintef(n)
-      use gem_com
+      use gemx_com
       use equil
       implicit none
 
@@ -1562,7 +1562,7 @@ end subroutine field
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine weight
   
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       INTEGER :: i,j,k,m=10,i1,j1
@@ -1700,7 +1700,7 @@ end subroutine field
 
       subroutine ComputeMatrix(ksp,AA,BB,dummy,ierr)
       use petscksp
-      use gem_com
+      use gemx_com
       use equil
        implicit none
        PetscErrorCode  ierr
@@ -1808,7 +1808,7 @@ end subroutine field
 
        subroutine ComputeRHS(ksp,bbb,k,ierr)
        use petscksp
-       use gem_com
+       use gemx_com
        use equil
        implicit none
        integer::k,ii,jj,iflag
@@ -1876,7 +1876,7 @@ end subroutine field
 
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
        subroutine smooth(matrix,mk)
-       use gem_com
+       use gemx_com
        use equil
 
        IMPLICIT NONE
@@ -1913,7 +1913,7 @@ end subroutine field
      !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
      subroutine integ(iflag)
        
-       use gem_com
+       use gemx_com
        use equil
 
        IMPLICIT NONE

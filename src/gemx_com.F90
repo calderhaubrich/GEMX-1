@@ -1,4 +1,4 @@
-module gem_com
+module gemx_com
 !common data used for gem
       use mpi
       USE pputil
@@ -110,7 +110,7 @@ parameter(outdir='./out/')
 save
 
 contains
-subroutine new_gem_com()
+subroutine new_gemx_com()
 
 allocate(mm(nsmx),tmm(nsmx),lr(nsmx))
 allocate(mims(nsmx),q(nsmx))
@@ -157,6 +157,6 @@ ALLOCATE(vol(1:nsubd),efle(1:nsubd,0:nmx),pfle(1:nsubd,0:nmx), &
          pfl(nsmx+1,0:nmx),efl(nsmx,0:nmx))
 
 
-end subroutine new_gem_com
+end subroutine new_gemx_com
 
-end module gem_com
+end module gemx_com

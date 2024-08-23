@@ -1,24 +1,21 @@
 #!/bin/bash -l
 
-#SBATCH -q debug
+#SBATCH -q regular
 #SBATCH -N 1
-#SBATCH --ntasks-per-node=1
-#SBATCH -c 1
-#SBATCH -t 00:30:00
-#SBATCH -J gpu_n1
-#SBATCH -C cpu
+#SBATCH --ntasks-per-node=16
+#SBATCH -c 8
+#SBATCH -t 24:00:00
+#SBATCH -J gemx_gpu
+#SBATCH -C gpu
+#SBATCH --gres=gpu:4
 #SBATCH -e run.err
 #SBATCH -o run.out
-#SBATCH -A mp118
-
-cd $SLURM_SUBMIT_DIR
-mkdir -p matrix
-mkdir -p out
-mkdir -p dump
+#SBATCH --gpu-bind=map_gpu:0,1,2,3
+#SBATCH -A mp118_g
 
 export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
-export OMP_NUM_THREADS=1
+export OMP_NUM_THREADS=8
 #if [ $SLURM_LOCALID -eq 0 ]; then 
 #CUDA_VISIBLE_DEVICES=$SLURM_JOB_GPUS nvidia-cuda-mps-control -d 
 #fi
@@ -26,9 +23,8 @@ export OMP_NUM_THREADS=1
 #export CUDA_VISIBLE_DEVICES=$(( SLURM_LOCALID % 4 ))
 #cd $SLURM_SUBMIT_DIR
 
-#srun --cpu-bind=cores ./gem_main >& run.out
-
+source env.sh
 export SLURM_CPU_BIND="cores"
-srun ./gem
+srun ./gemx
 #srun nsys profile -s process-tree -o output ./gem
 #srun ./select_gpu_device.sh nsys profile -s process-tree -o output ./gem_main

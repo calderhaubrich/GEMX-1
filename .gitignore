@@ -1,8 +1,5 @@
-#Ignore all build and runtime files.
-**/*.mod
-**/*.o
-**/gemx
-**/out
-**/dump
-**/matrix
-**/gemx_timing.txt
+#Ignore all build and runtime files.a
+bin
+src/*.mod
+src/*.o
+src/gemx

@@ -3,7 +3,7 @@
 !
       subroutine ppush(n)
 
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       REAL(8) :: exp1,ezp,ezetap,delbxp,delbzp,energy, energy0,nudi0,nudi,T_center,ni_temp
@@ -281,7 +281,7 @@
 !-----------------------------------------------------------------------
 !              Ion corrector push
 !-----------------------------------------------------------------------
-      use gem_com
+      use gemx_com
       use equil
       implicit none
       REAL(8) :: exp1,ezp,ezetap,delbxp,delbzp,nudi0,nudi=0,ni_temp,energy,rrr,T_center,energy0

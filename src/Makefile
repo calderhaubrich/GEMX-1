@@ -1,42 +1,86 @@
-F90  = mpif90
+F90 := mpif90
 
-SRCS = gem_com.F90 equil.F90 gem.F90 outd.F90 fcnt.F90
-OBJS = gem_com.o equil.o gem.o ionPush.o outd.o fcnt.o
-PLIB = pputil.o
-LIBS = -L${PETSC_DIR}/${PETSC_ARCH}/lib -lpetsc
-INCS = -I${PETSC_DIR}/include -I${PETSC_DIR}/${PETSC_ARCH}/include
+EXE := gemx
+ROOT := ..
+RUNDIR := $(ROOT)/bin
+JOBDIR := $(ROOT)/jobs
+SCRIPTDIR := $(ROOT)/scripts
 
-DEBUG ?= 1 #Default to off. Use 'make DEBUG=1' to build in debug.
-OPT_COMMON = -acc -r8 -Mbounds -Mfree -Minfo=accel $(INCS)
+SRCS := $(wildcard *.F90)
+OBJS := $(SRCS:.F90=.o)
+LIBS := -L${PETSC_PATH}/lib -lpetsc
+INCS := -I${PETSC_PATH}/include
+SCRIPTS := $(wildcard $(SCRIPTDIR)/*)
+
+#Setup flags for various situations.
+DEBUG ?= 0 #Use 'make DEBUG=1' to build with debug capabilities.
+CPU ?= 0   #Use 'make CPU=1' to build for cpu.
+OPT_COMMON := -r8 -Mfree $(INCS)
+OPT_COMMON_REL := -O4
+OPT_COMMON_DBG := -O0 -g -C -traceback -Mchkptr
+OPT_CPU := -acc=host #Default to serial for cpu. -acc=multicore for parallel but should test against OpenMP on system.
+OPT_GPU := -acc -Minfo=accel
+OPT_CPU_DBG := -Mbounds #Note, bounds checking disabled on gpu by OpenACC.
+
 ifeq ($(DEBUG),1)
-	OPT = -O0 -g -C -traceback -Mchkptr $(OPT_COMMON)
+	ifeq ($(CPU),1)
+		JOB := job_dbg_cpu
+		OPT :=  $(OPT_COMMON_DBG) $(OPT_COMMON) $(OPT_CPU) $(OPT_CPU_DBG)
+	else
+		JOB := job_dbg
+		OPT :=  $(OPT_COMMON_DBG) $(OPT_COMMON) $(OPT_GPU)
+	endif
 else
-	OPT = -O4 $(OPT_COMMON)
+	ifeq ($(CPU),1)
+		JOB := job_cpu
+		OPT := $(OPT_COMMON_REL) $(OPT_COMMON) $(OPT_CPU)
+	else
+		JOB := job
+		OPT := $(OPT_COMMON_REL) $(OPT_COMMON) $(OPT_GPU)
+	endif
 endif
 
-gemx: equil.o gem.o ionPush.o outd.o fcnt.o pputil.o gem_com.o
-	$(F90) -o gemx $(OPT) $(LIBS) $(OBJS) $(PLIB)
+#If not on perlmutter use local run script.
+ifneq ($(NERSC_HOST),perlmutter)
+	JOB := job_local
+	SCRIPTS := $(filter-out $(SCRIPTDIR)/env.sh,$(SCRIPTS))
+endif
+
+$(EXE): equil.o gemx.o ionPush.o outd.o fcnt.o pputil.o gemx_com.o
+	$(F90) -o $(EXE) $(OPT) $(LIBS) $(OBJS)
+	make install
 
 pputil.o: pputil.F90
 	$(F90) -c $(OPT) pputil.F90
 
-gem_com.o: gem_com.F90 pputil.o
-	$(F90) -c $(OPT) gem_com.F90
+gemx_com.o: gemx_com.F90 pputil.o
+	$(F90) -c $(OPT) gemx_com.F90
 
-equil.o: equil.F90 pputil.o gem_com.o
-	$(F90) -c $(OPT)  equil.F90
+equil.o: equil.F90 pputil.o gemx_com.o
+	$(F90) -c $(OPT) equil.F90
 
-gem.o: gem.F90 pputil.o gem_com.o equil.o
-	$(F90) -c $(OPT) gem.F90
+gemx.o: gemx.F90 pputil.o gemx_com.o equil.o
+	$(F90) -c $(OPT) gemx.F90
 
-ionPush.o: ionPush.F90 gem_com.o equil.o
+ionPush.o: ionPush.F90 gemx_com.o equil.o
 	$(F90) -c $(OPT) ionPush.F90
 
-outd.o: outd.F90 gem_com.o equil.o
+outd.o: outd.F90 gemx_com.o equil.o
 	$(F90) -c $(OPT) outd.F90
 
 fcnt.o: fcnt.F90
 	$(F90) -c $(OPT) fcnt.F90
 
 clean:
-	rm -f *.o *.lst *.mod gemx out/* dump/* xpp matrix/* testne testphi psi_test run.out flag_debug debug.dat test* mask* gemx_timing.txt
+	rm -f *.o *.lst *.mod gemx
+
+install:
+	mkdir -p $(RUNDIR)
+	mkdir -p $(RUNDIR)/out
+	mkdir -p $(RUNDIR)/dump
+	mkdir -p $(RUNDIR)/matrix
+	cp -f gemx $(RUNDIR)
+	cp -f gemx.in $(RUNDIR)
+	cp -f *.dat $(RUNDIR)
+	cp -f $(JOBDIR)/$(JOB) $(RUNDIR)
+	cp -f $(SCRIPTS) $(RUNDIR)

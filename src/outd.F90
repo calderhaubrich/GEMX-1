@@ -1,5 +1,5 @@
 	 subroutine outd(n)
-	 use gem_com
+	 use gemx_com
          use equil      
 	 implicit none
 	 INTEGER :: n,np
@@ -55,7 +55,7 @@
 
 	 subroutine phixy(grd,fl,unt,n)
 
-	 use gem_com
+	 use gemx_com
 	 implicit none
 	 REAL(8) :: grd(0:imx,0:jmx,0:1)
 	 integer :: i,j,k,n
@@ -100,7 +100,7 @@
 
 	 subroutine phixz(grd,fl,unt,n)
 
-	 use gem_com
+	 use gemx_com
 	 implicit none
 	 integer :: i,j,k,n
 	 REAL(8) :: grd(0:imx,0:jmx,0:1)

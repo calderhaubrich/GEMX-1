@@ -46,7 +46,7 @@ ifneq ($(NERSC_HOST),perlmutter)
 	SCRIPTS := $(filter-out $(SCRIPTDIR)/env.sh,$(SCRIPTS))
 endif
 
-$(EXE): equil.o gemx.o ionPush.o outd.o fcnt.o pputil.o gemx_com.o
+$(EXE): $(OBJS)
 	$(F90) -o $(EXE) $(OPT) $(LIBS) $(OBJS)
 	make install
 

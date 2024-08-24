@@ -75,7 +75,7 @@ fcnt.o: fcnt.F90
 
 clean:
 	rm -f *.o *.lst *.mod gemx
-	rm -r $(RUNDDIR)
+	rm -rf $(RUNDIR)
 
 install:
 	mkdir -p $(RUNDIR)

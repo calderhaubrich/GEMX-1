@@ -1,4 +1,4 @@
-F90 := mpif90
+F90 := ftn
 
 EXE := gemx
 ROOT := ..
@@ -10,6 +10,7 @@ SRCS := $(wildcard *.F90)
 OBJS := $(SRCS:.F90=.o)
 LIBS := -L${PETSC_PATH}/lib -lpetsc
 INCS := -I${PETSC_PATH}/include
+SHELLS := $(wildcard *.sh)
 SCRIPTS := $(wildcard $(SCRIPTDIR)/*)
 
 #Setup flags for various situations.
@@ -40,10 +41,11 @@ else
 	endif
 endif
 
-#If not on perlmutter use local run script.
+#If not on perlmutter use local run script and local compiler.
 ifneq ($(NERSC_HOST),perlmutter)
+	F90 := mpif90
 	JOB := job_local
-	SCRIPTS := $(filter-out $(SCRIPTDIR)/env.sh,$(SCRIPTS))
+	SHELLS := $(filter-out env.sh,$(SHELLS))
 endif
 
 $(EXE): $(OBJS)
@@ -84,3 +86,4 @@ install:
 	cp -f *.dat $(RUNDIR)
 	cp -f $(JOBDIR)/$(JOB) $(RUNDIR)
 	cp -f $(SCRIPTS) $(RUNDIR)
+	cp -f $(SHELLS) $(RUNDIR)

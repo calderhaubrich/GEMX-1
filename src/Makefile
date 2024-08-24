@@ -16,7 +16,7 @@ SCRIPTS := $(wildcard $(SCRIPTDIR)/*)
 #Setup flags for various situations.
 DEBUG ?= 0 #Use 'make DEBUG=1' to build with debug capabilities.
 CPU ?= 0   #Use 'make CPU=1' to build for cpu.
-OPT_COMMON := -r8 -Mfree
+OPT_COMMON := -r8 -Mfree $(INCS)
 OPT_COMMON_REL := -O4
 OPT_COMMON_DBG := -O0 -g -C -traceback -Mchkptr
 OPT_CPU := -acc=host #Default to serial for cpu. -acc=multicore for parallel but should test against OpenMP on system.
@@ -49,7 +49,7 @@ ifneq ($(NERSC_HOST),perlmutter)
 endif
 
 $(EXE): $(OBJS)
-	$(F90) -o $(EXE) $(OPT) $(INCS) $(LIBS) $(OBJS)
+	$(F90) -o $(EXE) $(OPT) $(LIBS) $(OBJS)
 	make install
 
 pputil.o: pputil.F90

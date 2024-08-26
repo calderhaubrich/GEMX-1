@@ -27,7 +27,8 @@ sbatch <job_script_name>
 All files necessary to run are copied to the ```bin``` folder. However this is done everytime ```make``` is called so changes to the input file ```gemx.in``` or NERSC job scripts may get overwritten
 if compiling code updates.
 
-It is recommended to make a new run directory and copy files there from ```bin```. ${\color{red}\textbf{\textrm{(This should be automated with a script.)}}}$
+A temporary fix is to make a new run directory and copy files there from ```bin```. Then update the job script to call ```../bin/gemx``` rather than ```./gemx```. Then you can have specific run files which call the latest version of the code.
+${\color{red}\textbf{\textrm{(This should be automated with a script.)}}}$
 
 To clean up run output, use the reset script in the run directory: ```./reset.sh```
 

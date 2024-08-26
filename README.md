@@ -58,7 +58,11 @@ But the nvidia hpc compilers and PETSc need to be installed locally. ${\color{re
 
 ## Analysing Runs
 
-Scripts to read run output are also copied to the ```bin``` folder. Some are MATLAB scripts some are Jupyter notebook files. This should all be consolidated at some point and described.
+Scripts to read run output are also copied to the ```bin``` folder. Some are MATLAB scripts some are Jupyter notebook files. 
+
+MATLAB scripts ```readden.m```, ```readphi.m``` and ```phi_gif.m``` can be opened by MATLAB. ```readden.m``` will plot the ion's density and n_i*v_parallel  .   ```readphi.m``` will plot the perturbed fields, perturbed electron density and parallel current. ```phi_gif.m``` will plot a gif figure for the perturbed electrostatic field. Open the file, change the MATLAB working path to your running folder, run the script, select ```add to path```.
+
+Python script ```readphi.ipynb``` should be placed in the running folder to be run. It will plot the traced particles' orbits.
 
 ## Cheat Sheet
 

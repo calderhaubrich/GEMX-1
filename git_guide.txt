@@ -1,3 +1,19 @@
+###Basic commands
+
+git pull                          - Pull the latest changes.
+git add .                         - Stage every new change for commit. (Period for all, can add just select files manually though.)
+git commit -m "commit message"    - Create a commit with added changes. Message should be descriptive about what was updated.
+git push                          - Push latest changes.
+
+git clone <link>                  - To initially download a repository.
+git checkout main                 - Revert to main branch (latest).
+git checkout <commit_id>          - Revert to older branches using identifier for each commit.
+git checkout -b <branch_name>     - Make a new branch separate from main branch. Can be useful for large project changes such as the C++ conversion.
+git gui                           - Open the gui. Can be useful for looking at commit histories. (Repository -> Visualize All Branch History)
+
+
+###Creating a repository
+
 Details could be found in the link: https://www.atlassian.com/git/tutorials/setting-up-a-repository
 
 

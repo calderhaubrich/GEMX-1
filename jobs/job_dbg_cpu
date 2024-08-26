@@ -12,12 +12,6 @@
 export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
 export OMP_NUM_THREADS=1
-#if [ $SLURM_LOCALID -eq 0 ]; then
-#CUDA_VISIBLE_DEVICES=$SLURM_JOB_GPUS nvidia-cuda-mps-control -d
-#fi
-#nvidia-cuda-mps-control -d
-#export CUDA_VISIBLE_DEVICES=$(( SLURM_LOCALID % 4 ))
-#cd $SLURM_SUBMIT_DIR
 
 #For outputting debug cores.
 export ATP_ENABLED=1
@@ -26,6 +20,3 @@ ulimit -c unlimited
 source env.sh
 export SLURM_CPU_BIND="cores"
 srun -n 16 ./gemx >& run.out
-#srun nsys profile -s process-tree -o output ./gem
-#srun ./select_gpu_device.sh nsys profile -s process-tree -o output ./gem_main
-

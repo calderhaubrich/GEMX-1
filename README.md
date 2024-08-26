@@ -46,7 +46,7 @@ Create a debug build by calling ```make DEBUG=1```. This will lower the optimiza
 
 Also the debug job script will dump core files as well if needed on perlmutter. The core dump files can be read with ```gdb gemx <core_file>```.
 
-Note, bounds checks are disable by OpenACC. A cpu run would be required.
+Note, bounds checks are disabled by OpenACC. A cpu run would be required.
 
 ### Running Locally
 

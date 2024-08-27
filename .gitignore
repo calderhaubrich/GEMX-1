@@ -1,4 +1,4 @@
-#Ignore all build and runtime files.a
+#Ignore all build and runtime files.
 bin
 src/*.mod
 src/*.o

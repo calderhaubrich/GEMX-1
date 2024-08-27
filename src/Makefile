@@ -2,7 +2,7 @@ F90 := ftn
 
 EXE := gemx
 ROOT := ..
-RUNDIR := $(ROOT)/bin
+BINDIR := $(ROOT)/bin
 JOBDIR := $(ROOT)/jobs
 SCRIPTDIR := $(ROOT)/scripts
 
@@ -50,7 +50,7 @@ endif
 
 $(EXE): $(OBJS)
 	$(F90) -o $(EXE) $(OPT) $(LIBS) $(OBJS)
-	make install
+	$(MAKE) install
 
 pputil.o: pputil.F90
 	$(F90) -c $(OPT) pputil.F90
@@ -74,17 +74,14 @@ fcnt.o: fcnt.F90
 	$(F90) -c $(OPT) fcnt.F90
 
 clean:
-	rm -f *.o *.lst *.mod gemx
-	rm -rf $(RUNDIR)
+	$(RM) *.o *.lst *.mod gemx
+	$(RM) -r $(BINDIR)
 
 install:
-	mkdir -p $(RUNDIR)
-	mkdir -p $(RUNDIR)/out
-	mkdir -p $(RUNDIR)/dump
-	mkdir -p $(RUNDIR)/matrix
-	cp -f gemx $(RUNDIR)
-	cp -f gemx.in $(RUNDIR)
-	cp -f *.dat $(RUNDIR)
-	cp -f $(JOBDIR)/$(JOB) $(RUNDIR)
-	cp -f $(SCRIPTS) $(RUNDIR)
-	cp -f $(SHELLS) $(RUNDIR)
+	mkdir -p $(BINDIR) $(BINDIR)/out $(BINDIR)/dump $(BINDIR)/matrix
+	cp -f gemx $(BINDIR)
+	cp -f gemx.in $(BINDIR)
+	cp -f *.dat $(BINDIR)
+	cp -f $(JOBDIR)/$(JOB) $(BINDIR)
+	cp -f $(SCRIPTS) $(BINDIR)
+	cp -f $(SHELLS) $(BINDIR)

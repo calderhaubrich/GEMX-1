@@ -50,11 +50,44 @@ Note, bounds checks are disabled by OpenACC. A cpu run would be required.
 
 ### Running Locally
 
-The makefile is setup to run locally and on perlmutter without changing any settings. The only difference is the ```env.sh``` doesn't need to be sourced.
+The makefile is setup to run locally and on perlmutter without changing any settings. The only difference is the ```env.sh``` doesn't need to be called locally. Instead one should update their local environment in ```~/.bashrc``` manually.
 
-Instead one should update their local environment in ```~/.bashrc``` manually.
+To run locally, the Nvidia HPC compilers and PETSc need to be installed.
 
-But the nvidia hpc compilers and PETSc need to be installed locally. ${\color{red}\textbf{\textrm{(Add instructions.)}}}$
+At the time of writing this, perlmutter uses version 23.9 of the Nvidia HPC compilers available [here](https://developer.nvidia.com/nvidia-hpc-sdk-releases).
+
+Update ```~/.bashrc``` with the following, per the [installation guide](https://docs.nvidia.com/hpc-sdk/archive/23.9/hpc-sdk-install-guide/index.html):
+```bash
+NVARCH=`uname -s`_`uname -m`; export NVARCH
+NVCOMPILERS=/opt/nvidia/hpc_sdk; export NVCOMPILERS
+MANPATH=$MANPATH:$NVCOMPILERS/$NVARCH/23.9/compilers/man; export MANPATH
+PATH=$NVCOMPILERS/$NVARCH/23.9/compilers/bin:$PATH; export PATH
+export PATH=$NVCOMPILERS/$NVARCH/23.9/comm_libs/mpi/bin:$PATH
+export MANPATH=$MANPATH:$NVCOMPILERS/$NVARCH/23.9/comm_libs/mpi/man
+```
+
+Then download PETSc to your preferred location (currently v3.19.3 is installed manually on NERSC) per the [installation instructions](https://petsc.org/release/install/):
+```bash
+git clone -b release https://gitlab.com/petsc/petsc.git petsc
+cd petsc
+git checkout v3.19.3
+```
+(Note, the instructions mention installing in a root controlled directory like the default ```/opt``` is not recommended. However [instructions](https://petsc.org/release/install/install/#installation-in-root-location-not-recommended-uncommon) to do this are given if it is preferred.)
+
+Update ```~/.bashrc``` with the following for PETSc as well:
+```bash
+export PETSC_PATH=<cloned-petsc-location>/install
+export LD_LIBRARY_PATH=$PETSC_PATH/lib:$LD_LIBRARY_PATH
+```
+
+Then configure PETSc to install to the chosen path:
+```bash
+./configure --prefix=$PETSC_PATH/install --with-debugging=0 --with-cc=mpicc --with-cxx=mpicxx --with-fc=mpif90 COPTFLAGS='-O3' CXXOPTFLAGS='-O3' FOPTFLAGS='-O3'
+```
+
+Finally, follow the output PETSc instructions to make and install.
+
+Then one can make from the GEMX src directory.
 
 ## Analysing Runs
 

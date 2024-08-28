@@ -79,7 +79,7 @@ export PETSC_PATH=<cloned-petsc-location>/install
 export LD_LIBRARY_PATH=$PETSC_PATH/lib:$LD_LIBRARY_PATH
 ```
 
-Reload the terminal environment so PETSc and GEMX can be compiled using ```source ~/.bashrc```.
+Reload the terminal environment so PETSc and GEMX can be compiled: ```source ~/.bashrc```.
 
 Then configure PETSc to install to the chosen path:
 ```bash
@@ -89,7 +89,14 @@ This should set PETSc to be compiled with the Nvidia compilers given the Nvidia 
 
 Finally, follow the instructions output by PETSc to further make and install the library.
 
-Then one can make from the GEMX src directory.
+Then one can make and run GEMX using the instructions from before, but without needing ```source env.sh``` or ```sbatch```:
+```bash
+git clone git@github.com:UCBoulder/GEMX.git
+cd src
+make
+cd ../bin
+./job_local
+```
 
 ## Analysing Runs
 

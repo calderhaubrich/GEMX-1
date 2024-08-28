@@ -66,13 +66,12 @@ export PATH=$NVCOMPILERS/$NVARCH/23.9/comm_libs/mpi/bin:$PATH
 export MANPATH=$MANPATH:$NVCOMPILERS/$NVARCH/23.9/comm_libs/mpi/man
 ```
 
-Then download PETSc to your preferred location (currently v3.19.3 is installed manually on NERSC) per the [installation instructions](https://petsc.org/release/install/):
+Then download PETSc to your preferred location (currently v3.19.3 is installed manually on NERSC for mp118) per the [installation instructions](https://petsc.org/release/install/):
 ```bash
 git clone -b release https://gitlab.com/petsc/petsc.git petsc
 cd petsc
 git checkout v3.19.3
 ```
-(Note, the instructions mention installing in a root controlled directory like the default ```/opt``` is not recommended. However [instructions](https://petsc.org/release/install/install/#installation-in-root-location-not-recommended-uncommon) to do this are given if it is preferred.)
 
 Update ```~/.bashrc``` with the following for PETSc as well:
 ```bash
@@ -80,12 +79,15 @@ export PETSC_PATH=<cloned-petsc-location>/install
 export LD_LIBRARY_PATH=$PETSC_PATH/lib:$LD_LIBRARY_PATH
 ```
 
+Reload the terminal environment so PETSc and GEMX can be compiled using ```source ~/.bashrc```.
+
 Then configure PETSc to install to the chosen path:
 ```bash
 ./configure --prefix=$PETSC_PATH/install --with-debugging=0 --with-cc=mpicc --with-cxx=mpicxx --with-fc=mpif90 COPTFLAGS='-O3' CXXOPTFLAGS='-O3' FOPTFLAGS='-O3'
 ```
+This should set PETSc to be compiled with the Nvidia compilers given the Nvidia environment paths above.
 
-Finally, follow the output PETSc instructions to make and install.
+Finally, follow the instructions output by PETSc to further make and install the library.
 
 Then one can make from the GEMX src directory.
 
